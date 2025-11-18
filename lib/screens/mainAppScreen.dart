@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../providers/workspace_provider.dart';
 import '../widgets/AiPromptBar.dart';
 import '../widgets/CodeEditorPanel.dart';
 import '../widgets/FileExplorerPanel.dart';
@@ -11,6 +12,7 @@ class MainIdeLayout extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+        final workspaceState = ref.watch(workspaceProvider);
     return MaterialApp(
       title: 'Dart IDE',
       debugShowCheckedModeBanner: false,
@@ -34,13 +36,143 @@ class MainIdeLayout extends ConsumerWidget {
               color: const Color(0xFF1E1F20),
               child: Row(
                 children: [
-                  Text("File", style: TextStyle(color: Colors.grey[300])),
+                  // File Menu with Dropdown
+                  PopupMenuButton<String>(
+                    onSelected: (value) async {
+                      if (value == 'New Workspace') {
+                        _showNewWorkspaceDialog(context, ref);
+                      } else if (value.startsWith('Switch to: ')) {
+                        final workspacePath = value.replaceFirst('Switch to: ', '');
+                        await ref.read(workspaceProvider.notifier).switchWorkspace(workspacePath);
+                      } else {
+                        print("Selected: $value");
+                      }
+                    },
+                    child: Text("File", style: TextStyle(color: Colors.grey[300])),
+                    itemBuilder: (BuildContext context) {
+                      final workspaceItems = workspaceState.availableWorkspaces
+                          .where((path) => path != workspaceState.currentWorkspacePath)
+                          .map((path) => PopupMenuItem<String>(
+                                value: 'Switch to: $path',
+                                child: Text('Switch to: ${path.split('/').last}'),
+                              ))
+                          .toList();
+
+                      return <PopupMenuEntry<String>>[
+                        const PopupMenuItem<String>(
+                          value: 'New Workspace',
+                          child: Text('New Workspace'),
+                        ),
+                        const PopupMenuItem<String>(
+                          value: 'Open Project',
+                          child: Text('Open Project'),
+                        ),
+                        const PopupMenuItem<String>(
+                          value: 'Export Project',
+                          child: Text('Export Project'),
+                        ),
+                        const PopupMenuItem<String>(
+                          value: 'Save As',
+                          child: Text('Save As'),
+                        ),
+                        if (workspaceItems.isNotEmpty) const PopupMenuDivider(),
+                        ...workspaceItems,
+                        const PopupMenuDivider(),
+                        const PopupMenuItem<String>(
+                          value: 'Exit',
+                          child: Text('Exit'),
+                        ),
+                      ];
+                    },
+                  ),
                   const SizedBox(width: 16),
-                  Text("Edit", style: TextStyle(color: Colors.grey[300])),
+
+                  // Edit Menu with Dropdown
+                  PopupMenuButton<String>(
+                    onSelected: (value) {
+                      print("Selected: $value");
+                    },
+                    child: Text("Edit", style: TextStyle(color: Colors.grey[300])),
+                    itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                      const PopupMenuItem<String>(
+                        value: 'Undo',
+                        child: Text('Undo'),
+                      ),
+                      const PopupMenuItem<String>(
+                        value: 'Redo',
+                        child: Text('Redo'),
+                      ),
+                      const PopupMenuDivider(),
+                      const PopupMenuItem<String>(
+                        value: 'Cut',
+                        child: Text('Cut'),
+                      ),
+                      const PopupMenuItem<String>(
+                        value: 'Copy',
+                        child: Text('Copy'),
+                      ),
+                      const PopupMenuItem<String>(
+                        value: 'Paste',
+                        child: Text('Paste'),
+                      ),
+                    ],
+                  ),
                   const SizedBox(width: 16),
-                  Text("View", style: TextStyle(color: Colors.grey[300])),
+
+                  // View Menu with Dropdown
+                  PopupMenuButton<String>(
+                    onSelected: (value) {
+                      print("Selected: $value");
+                    },
+                    child: Text("View", style: TextStyle(color: Colors.grey[300])),
+                    itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                      const PopupMenuItem<String>(
+                        value: 'Zoom In',
+                        child: Text('Zoom In'),
+                      ),
+                      const PopupMenuItem<String>(
+                        value: 'Zoom Out',
+                        child: Text('Zoom Out'),
+                      ),
+                      const PopupMenuDivider(),
+                      const PopupMenuItem<String>(
+                        value: 'Full Screen',
+                        child: Text('Full Screen'),
+                      ),
+                      const PopupMenuItem<String>(
+                        value: 'Theme',
+                        child: Text('Theme'),
+                      ),
+                    ],
+                  ),
                   const SizedBox(width: 16),
-                  Text("Run", style: TextStyle(color: Colors.grey[300])),
+
+                  // Run Menu with Dropdown
+                  PopupMenuButton<String>(
+                    onSelected: (value) {
+                      print("Selected: $value");
+                    },
+                    child: Text("Run", style: TextStyle(color: Colors.grey[300])),
+                    itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                      const PopupMenuItem<String>(
+                        value: 'Run Code',
+                        child: Text('Run Code'),
+                      ),
+                      const PopupMenuItem<String>(
+                        value: 'Debug',
+                        child: Text('Debug'),
+                      ),
+                      const PopupMenuDivider(),
+                      const PopupMenuItem<String>(
+                        value: 'Run Tests',
+                        child: Text('Run Tests'),
+                      ),
+                      const PopupMenuItem<String>(
+                        value: 'Stop',
+                        child: Text('Stop'),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -76,6 +208,77 @@ class MainIdeLayout extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+
+  void _showNewWorkspaceDialog(BuildContext context, WidgetRef ref) {
+    final TextEditingController _workspaceNameController = TextEditingController();
+    String progressMessage = '';
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Create New Workspace'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: _workspaceNameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Workspace Name',
+                      hintText: 'Enter workspace name',
+                    ),
+                  ),
+                  if (progressMessage.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 16.0),
+                      child: Text(progressMessage, style: const TextStyle(color: Colors.grey)),
+                    ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    final workspaceName = _workspaceNameController.text.trim();
+                    if (workspaceName.isEmpty) {
+                      setState(() {
+                        progressMessage = 'Please enter a valid name';
+                      });
+                      return;
+                    }
+
+                    try {
+                      await ref.read(workspaceProvider.notifier).createNewWorkspace(
+                            workspaceName,
+                            (msg) {
+                              setState(() {
+                                progressMessage = msg;
+                              });
+                            },
+                          );
+                      Navigator.of(context).pop();
+                    } catch (e) {
+                      setState(() {
+                        progressMessage = 'Error: $e';
+                      });
+                    }
+                  },
+                  child: const Text('Create'),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 }

@@ -97,7 +97,7 @@ class SetupService {
     final dartExecutable = p.join(dartSdkPath, 'bin', 'dart');
     await _ensureExecutablePermission(dartExecutable);
 
-    final result = await _runProcess(
+    final result = await runProcess(
       dartExecutable,
       ['create', projectName],
       workingDirectory: sandboxPath,
@@ -110,7 +110,7 @@ class SetupService {
     return p.join(sandboxPath, projectName);
   }
 
-  Future<_ProcessExecutionResult> _runProcess(
+  Future<ProcessExecutionResult> runProcess(
     String executable,
     List<String> arguments, {
     String? workingDirectory,
@@ -129,7 +129,7 @@ class SetupService {
         throw Exception('Native process runner returned no result.');
       }
 
-      return _ProcessExecutionResult(
+      return ProcessExecutionResult(
         exitCode: response['exitCode'] as int? ?? -1,
         stdout: response['stdout'] as String? ?? '',
         stderr: response['stderr'] as String? ?? '',
@@ -142,7 +142,7 @@ class SetupService {
       workingDirectory: workingDirectory,
     );
 
-    return _ProcessExecutionResult(
+    return ProcessExecutionResult(
       exitCode: result.exitCode,
       stdout: (result.stdout ?? '').toString(),
       stderr: (result.stderr ?? '').toString(),
@@ -172,12 +172,12 @@ class SetupService {
   }
 }
 
-class _ProcessExecutionResult {
+class ProcessExecutionResult {
   final int exitCode;
   final String stdout;
   final String stderr;
 
-  const _ProcessExecutionResult({
+  const ProcessExecutionResult({
     required this.exitCode,
     required this.stdout,
     required this.stderr,
