@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:studio_packet/utils/utils.dart';
 import 'package:studio_packet/utils/native_utils.dart';
 import 'package:path/path.dart' as p;
+import 'package:root_plus/root_plus.dart';
 
 class SetupService {
   static const String _isFirstRunKey = 'isFirstRun';
@@ -196,8 +197,8 @@ class SetupService {
   }
 
   Future<void> _ensureExecutablePermission(String executablePath) async {
-    if (Platform.isWindows || Platform.isAndroid) {
-      // Windows does not use executable bits and Android will handle permissions natively.
+    if (Platform.isWindows) {
+      // Windows does not use executable bits
       return;
     }
 
@@ -206,14 +207,105 @@ class SetupService {
       throw Exception('Executable not found at $executablePath');
     }
 
-    final stat = await executable.stat();
-    if (stat.modeString().contains('x')) {
-      return;
+    // Check if already executable
+    if (Platform.isAndroid) {
+      // On Android, try to check if file is executable
+      // If not, we'll try multiple methods
+      final stat = await executable.stat();
+      if (stat.modeString().contains('x')) {
+        return;
+      }
+    } else {
+      final stat = await executable.stat();
+      if (stat.modeString().contains('x')) {
+        return;
+      }
     }
 
-    final chmodResult = await Process.run('chmod', ['+x', executablePath]);
-    if (chmodResult.exitCode != 0 && kDebugMode) {
-      debugPrint('Unable to mark $executablePath as executable: ${chmodResult.stderr}');
+    // Try normal chmod first
+    try {
+      final chmodResult = await Process.run('chmod', ['+x', executablePath]);
+      if (chmodResult.exitCode == 0) {
+        if (kDebugMode) {
+          debugPrint('Successfully set executable permission using chmod');
+        }
+        return;
+      }
+      if (kDebugMode) {
+        debugPrint('chmod failed: ${chmodResult.stderr}');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('chmod exception: $e');
+      }
+    }
+
+    // Last fallback: Try using root access on Android if device is rooted
+    if (Platform.isAndroid) {
+      try {
+        final isRooted = await _checkIfDeviceIsRooted();
+        if (isRooted) {
+          if (kDebugMode) {
+            debugPrint('Device is rooted, attempting to use root access for chmod');
+          }
+          await _chmodWithRoot(executablePath);
+        } else {
+          if (kDebugMode) {
+            debugPrint('Device is not rooted, cannot use root fallback');
+          }
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          debugPrint('Root fallback failed: $e');
+        }
+      }
+    }
+  }
+
+  /// Check if the Android device is rooted
+  Future<bool> _checkIfDeviceIsRooted() async {
+    try {
+      final isRooted = await RootPlus.isRootAvailable();
+      if (kDebugMode) {
+        debugPrint('Root check result: $isRooted');
+      }
+      return isRooted ?? false;
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Error checking root status: $e');
+      }
+      return false;
+    }
+  }
+
+  /// Use root access to set executable permission
+  Future<void> _chmodWithRoot(String executablePath) async {
+    try {
+      // Request root access if not already granted
+      final hasRoot = await RootPlus.requestRootAccess();
+      if (hasRoot != true) {
+        if (kDebugMode) {
+          debugPrint('Root access not granted');
+        }
+        return;
+      }
+
+      // Execute chmod with root privileges
+      final result = await RootPlus.execute(command: 'chmod +x "$executablePath"');
+      if (result != null && result.isNotEmpty) {
+        if (kDebugMode) {
+          debugPrint('Root chmod result: $result');
+        }
+      }
+      
+      if (kDebugMode) {
+        debugPrint('Successfully set executable permission using root access');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Failed to set executable permission with root: $e');
+      }
+      rethrow;
     }
   }
 }
