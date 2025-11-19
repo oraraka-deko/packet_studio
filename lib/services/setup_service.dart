@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:studio_packet/utils/utils.dart';
 import 'package:studio_packet/utils/native_utils.dart';
 import 'package:path/path.dart' as p;
+import 'package:root_plus/root_plus.dart';
 
 class SetupService {
   static const String _isFirstRunKey = 'isFirstRun';
