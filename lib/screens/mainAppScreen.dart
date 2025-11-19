@@ -24,7 +24,7 @@ class _MainIdeLayoutState extends ConsumerState<MainIdeLayout> {
   Widget build(BuildContext context) {
     final workspaceState = ref.watch(workspaceProvider);
     final screenWidth = MediaQuery.of(context).size.width;
-    final isSmallScreen = screenWidth < 900;
+    final isSmallScreen = screenWidth < 1100;
     
     return MaterialApp(
       title: 'Dart IDE',
