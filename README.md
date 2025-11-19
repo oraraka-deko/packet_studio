@@ -40,6 +40,7 @@ This pattern is also used by projects like [`nightmare-space/code_lfa`](https://
    - `SetupService` checks for `libdart.so` in the native library directory
    - If found, it uses it instead of the extracted SDK binary
    - If not found, it falls back to extracting from assets
+   - As a last resort on rooted devices, it can use root access to set permissions
 
 ### Multi-ABI Support
 
@@ -71,6 +72,18 @@ Each `libdart.so` must be the architecture-specific binary renamed.
 **Integration** (`lib/services/setup_service.dart`):
 - `getDartExecutablePath()` - Returns JNI path or falls back to extracted SDK
 - `_createWorkspace()` - Automatically uses JNI binary when available
+- `_ensureExecutablePermission()` - Tries chmod, then root access as last fallback
+- Uses `root_plus` package on rooted devices when other methods fail
+
+### Execution Permission Fallback Chain
+
+The app tries multiple methods to ensure the Dart binary is executable:
+
+1. **JNI Library** (Preferred): Uses `libdart.so` from `jniLibs` - no permission issues
+2. **Normal chmod**: Attempts standard `chmod +x` on extracted SDK binary
+3. **Root Access** (Last Resort): On rooted devices, uses `root_plus` to set permissions
+
+This layered approach ensures maximum compatibility across different Android devices and configurations.
 
 ### References
 
