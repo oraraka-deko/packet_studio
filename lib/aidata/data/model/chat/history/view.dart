@@ -25,15 +25,13 @@ final class ChatRoleTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = context.isDark;
-    final text = Text(role.localized, style: const TextStyle(fontSize: 15));
+    final text = Text(role.localized, style: const TextStyle(fontSize: 11));
     final label = Container(
       padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 3),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(13),
-        color: isDark
-            ? const Color.fromARGB(37, 203, 203, 203)
-            : const Color.fromARGB(29, 84, 84, 84),
-      ),
+        color: const Color.fromARGB(37, 203, 203, 203)
+            ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -92,7 +90,7 @@ final class ChatHistoryContentView extends StatelessWidget {
 
     final children = chatItem.content.map((e) {
       final fn = switch (e.type) {
-        // ChatContentType.audio => _buildAudio(e),
+         ChatContentType.audio => _buildAudio,
         ChatContentType.image => _buildImage,
         ChatContentType.file => _buildFile,
         _ => _buildText,
@@ -226,7 +224,7 @@ Widget _buildFile(BuildContext context, ChatContent content) {
   return FileCardView(path: content.raw);
 }
 
-Widget _buildAudio(ChatContent content) {
+Widget _buildAudio(BuildContext context,ChatContent content) {
   return audioTileFor(content);
 }
 

@@ -159,10 +159,28 @@ android {
 **Problem**: Still getting permission errors
 
 **Solution**: 
-- This shouldn't happen with JNI libraries, but if it does:
-- Verify the binary is in `jniLibs`, not extracted from assets
-- Check logs to see which path is being used
+- The app now has a multi-layered fallback system:
+  1. First tries JNI library (no permission issues)
+  2. Then tries standard `chmod +x`
+  3. Finally, on rooted devices, uses `root_plus` package for root access
+- Check debug logs to see which method was attempted
+- If device is rooted and you see "Device is rooted, attempting to use root access", grant root permission when prompted
 - Make sure you're testing on actual Android, not Linux
+
+### Root Access Fallback
+
+**When it's used**: 
+- Only as a last resort when JNI library is not available and normal chmod fails
+- Only on Android devices that are rooted
+- Automatically detected and attempted
+
+**How it works**:
+1. App checks if device has root access using `root_plus` package
+2. If rooted, requests root permission (user prompt may appear)
+3. Executes `chmod +x` with root privileges
+4. Logs result in debug mode
+
+**Note**: Root access is completely optional and only used as a fallback for maximum compatibility.
 
 ## Advanced: Build Script
 

@@ -100,9 +100,8 @@ final class _HomeBottomState extends State<_HomeBottom> {
 
   Widget _build() {
     return Container(
-      padding: isDesktop
-          ? const EdgeInsets.only(left: 11, right: 11, top: 5, bottom: 17)
-          : const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+padding: 
+ EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
         borderRadius: const BorderRadius.vertical(top: Radius.circular(17)),
         boxShadow: RNodes.dark.value ? _boxShadow : _boxShadowDark,
@@ -129,7 +128,6 @@ final class _HomeBottomState extends State<_HomeBottom> {
       ],
     );
   }
-//final url = "https://www.google.com";
 
 
 Widget _buildBottomFnsTwoRows() {
@@ -147,16 +145,13 @@ Widget _buildBottomFnsTwoRows() {
                 _switchPage(HomePageEnum.chat);
               }
             },
-            icon: const Icon(MingCute.add_fill, size: 17),
+            icon: const Icon(MingCute.add_fill, size: 15),
           ),
           IconButton(
             onPressed: () => _onTapDeleteChat(_curChatId.value, context),
-            icon: const Icon(Icons.delete, size: 19),
+            icon: const Icon(Icons.delete, size: 15),
           ),
           _buildFileBtn(),
-          _buildSettingsBtn(), // existing chat settings
-          _buildOpenSettingsDrawerBtn(), // new: open Hive-backed drawer
-          _buildRight(),
         ],
       ),
       const SizedBox(height: 1),
@@ -196,53 +191,28 @@ Widget _buildBottomFnsTwoRows() {
   );
 }
 
-  Widget _buildSettingsBtn() {
-    return IconButton(
-      onPressed: _onTapSetting,
-      icon:  Icon(Icons.settings, size: 17),
-    );
-  }
-
-  
-  Widget _buildOpenSettingsDrawerBtn() {
-    return IconButton(
-      tooltip: 'Open Settings Drawer',
-      onPressed: () {
-        // Prefer using the global key so it works on desktop where context
-        // may not resolve to the correct Scaffold (e.g., nested navigators).
-        final state = homeScaffoldKey.currentState ?? Scaffold.maybeOf(context);
-        if (state == null) {
-          context.showSnackBar('No Scaffold found for opening drawer.');
-          return;
-        }
-        state.openEndDrawer();
-      },
-      icon:  Icon(Icons.tune, size: 17),
-    );
-  }
-
   Widget _buildFileBtn() {
     return Cfg.chatType.listenVal((chatType) {
       return switch (chatType) {
         ChatType.text || ChatType.img => IconButton(
           onPressed: () => _onTapFilePick(context),
-          icon: const Icon(MingCute.file_upload_fill, size: 19),
+          icon: const Icon(MingCute.file_upload_fill, size: 15),
         ),
         ChatType.audio => IconButton(
           onPressed: () => _onTapFilePick(context),
-          icon: const Icon(MingCute.file_upload_fill, size: 19),
+          icon: const Icon(MingCute.file_upload_fill, size: 15),
         ),
         ChatType.voice => IconButton(
           onPressed: () => _onTapFilePick(context),
-          icon: const Icon(MingCute.file_upload_fill, size: 19),
+          icon: const Icon(MingCute.file_upload_fill, size: 15),
         ),
         ChatType.voicejustin => IconButton(
           onPressed: () => _onTapFilePick(context),
-          icon: const Icon(MingCute.file_upload_fill, size: 19),
+          icon: const Icon(MingCute.file_upload_fill, size: 15),
         ),
         ChatType.autoenglishtrans => IconButton(
           onPressed: () => _onTapFilePick(context),
-          icon: const Icon(MingCute.file_upload_fill, size: 19),
+          icon: const Icon(MingCute.file_upload_fill, size: 15),
         ),
       };
     });
@@ -338,12 +308,12 @@ Widget _buildBottomFnsTwoRows() {
                         Btn.icon(
                           onTap: () =>
                               _onCreateRequest(context, _curChatId.value),
-                          icon:  Icon(Icons.send, size: 18),
+                          icon:  Icon(Icons.send, size: 10),
                         ),
                       IconButton(
                         tooltip: 'Prompt generator',
                         onPressed: _openPromptGenerator,
-                        icon:  Icon(Icons.auto_awesome, size: 18),
+                        icon:  Icon(Icons.auto_awesome, size: 10),
                       ),
                     ],
                   );
@@ -385,7 +355,7 @@ Widget _buildBottomFnsTwoRows() {
           child: _buildRoundRect(
             Row(
               children: [
-                Icon(chatT.icon, size: 15),
+                Icon(chatT.icon, size: 10),
                 UIs.width7,
                 Text(chatT.name, style: UIs.text13),
               ],
@@ -407,20 +377,6 @@ Widget _buildBottomFnsTwoRows() {
 //       _fadeRoute( ()),
 //     ); // Replace AnotherPage with your desired page
 //   }
-Route<T> _fadeRoute<T>(Widget page) {
-  return PageRouteBuilder<T>(
-    pageBuilder: (_, __, ___) => page,
-    transitionsBuilder: (_, anim, __, child) {
-      return FadeTransition(
-        opacity: anim.drive(CurveTween(curve: Curves.easeInOut)),
-        child: child,
-      );
-    },
-    transitionDuration: const Duration(milliseconds: 220),
-    reverseTransitionDuration: const Duration(milliseconds: 200),
-    opaque: true,
-    fullscreenDialog: true,
-  );}
   Widget _buildRoundRect(Widget child) {
     return Container(
       decoration: BoxDecoration(
@@ -432,21 +388,6 @@ Route<T> _fadeRoute<T>(Widget page) {
     );
   }
 
-  void _onTapSetting() async {
-    final chat = _curChat;
-    if (chat == null) {
-      context.showSnackBar(libL10n.empty);
-      return;
-    }
-
-    await _ChatSettings.route.go(context, chat);
-  }
-
-  Widget _buildRight() {
-    return _curPage.listenVal((val) {
-      return val == HomePageEnum.chat ? _buildChatMeta() : _buildChatMeta();
-    });
-  }
 
   // Widget _buildSyncChats() {
   //   final rs = BakSync.instance.remoteStorage;
@@ -457,36 +398,6 @@ Route<T> _fadeRoute<T>(Widget page) {
   //   );
   // }
 
-  Widget _buildChatMeta() {
-    if (BuildMode.isRelease) return UIs.placeholder;
-    return IconButton(
-      icon: const Icon(Icons.code, size: 19),
-      onPressed: _onTapMeta,
-    );
-  }
-
-  void _onTapMeta() {
-    final chat = _curChat;
-    if (chat == null) {
-      context.showSnackBar(libL10n.empty);
-      return;
-    }
-
-    final jsonRaw = jsonIndentEncoder.convert(chat.toJson());
-    final md =
-        '''
-```json
-$jsonRaw
-```''';
-
-    context.showRoundDialog(
-      title: l10n.raw,
-      child: SingleChildScrollView(child: SimpleMarkdown(data: md)),
-      actions: Btnx.oks,
-    );
-  }
-
-  // Removed unused _onTapSyncChats() method
 }
 
 class _HoldToRecordButton extends StatelessWidget {
@@ -517,7 +428,7 @@ class _HoldToRecordButton extends StatelessWidget {
         ),
         child: Icon(
           isRecording ? Icons.mic : Icons.mic_none,
-          size: 20,
+          size: 15,
           color: Colors.white,
         ),
       ),

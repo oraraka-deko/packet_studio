@@ -7,13 +7,13 @@ class SettingStore extends HiveStore {
 
   static final instance = SettingStore._();
 
-  late final themeMode = propertyDefault('themeMode', 0);
+  late final themeMode = propertyDefault('themeMode', 1);
 
   late final themeColorSeed = propertyDefault('themeColorSeed', 4287106639);
 
-  late final fontSize = propertyDefault('fontSize', 12.0);
+  late final fontSize = propertyDefault('fontSize', 10.0);
 
-  late final autoCheckUpdate = propertyDefault('autoCheckUpdate', true);
+  late final autoCheckUpdate = propertyDefault('autoCheckUpdate', false);
 
   /// Auto scroll to bottom when new message comes.
   late final scrollBottom = propertyDefault('scrollBottom', true);
@@ -24,7 +24,7 @@ class SettingStore extends HiveStore {
 
   late final autoRmDupChat = propertyDefault('autoRmDupChat', true);
 
-  late final genTitle = propertyDefault('genTitle', true);
+  late final genTitle = propertyDefault('genTitle', false);
 
   late final initHelpShown = propertyDefault('initHelpShown', false);
   //late final imPro = property('imPro', false);
@@ -34,7 +34,7 @@ class SettingStore extends HiveStore {
 
   late final replay = propertyDefault('replay', false);
 late final response = propertyDefault('response', false);
-  late final hideTitleBar = propertyDefault('hideTitleBar', false);
+  late final hideTitleBar = propertyDefault('hideTitleBar', true);
 
   /// If it is false, delete without asking.
   late final confrimDel = propertyDefault('confrimDel', true);
@@ -42,10 +42,10 @@ late final response = propertyDefault('response', false);
   late final joinBeta = propertyDefault('joinBeta', false);
 
   /// For chat and share
-  late final compressImg = propertyDefault('compressImg', true);
+  late final compressImg = propertyDefault('compressImg', false);
 
   /// Save the chat after each message sent or received even if it has error.
-  late final saveErrChat = propertyDefault('saveErrChat', false);
+  late final saveErrChat = propertyDefault('saveErrChat', true);
 
   late final scrollSwitchChat = propertyDefault('scrollSwitchChat', isMobile);
   late final toolsEnabled = propertyDefault('toolsEnabled', false);

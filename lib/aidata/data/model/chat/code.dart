@@ -124,7 +124,7 @@ class CodeElementBuilder extends MarkdownElementBuilder {
   }
 
   Map<String, TextStyle> get _theme {
-    return RNodes.dark.value ? _darkTheme : _lightTheme;
+    return RNodes.dark.value ? _darkTheme : _darkTheme;
   }
 }
 

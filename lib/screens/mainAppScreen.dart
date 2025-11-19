@@ -7,12 +7,25 @@ import '../widgets/CodeEditorPanel.dart';
 import '../widgets/FileExplorerPanel.dart';
 import '../widgets/RightUtilityPanel.dart';
 
-class MainIdeLayout extends ConsumerWidget {
+class MainIdeLayout extends ConsumerStatefulWidget {
   const MainIdeLayout({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-        final workspaceState = ref.watch(workspaceProvider);
+  ConsumerState<MainIdeLayout> createState() => _MainIdeLayoutState();
+}
+
+class _MainIdeLayoutState extends ConsumerState<MainIdeLayout> {
+  bool _isLeftSidebarVisible = true;
+  bool _isRightSidebarVisible = false; // Start hidden on mobile
+  double _leftSidebarWidth = 60;
+  double _rightSidebarWidth = 60;
+
+  @override
+  Widget build(BuildContext context) {
+    final workspaceState = ref.watch(workspaceProvider);
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 1100;
+    
     return MaterialApp(
       title: 'Dart IDE',
       debugShowCheckedModeBanner: false,
@@ -40,7 +53,7 @@ class MainIdeLayout extends ConsumerWidget {
                   PopupMenuButton<String>(
                     onSelected: (value) async {
                       if (value == 'New Workspace') {
-                        _showNewWorkspaceDialog(context, ref);
+                        _showNewWorkspaceDialog(context);
                       } else if (value.startsWith('Switch to: ')) {
                         final workspacePath = value.replaceFirst('Switch to: ', '');
                         await ref.read(workspaceProvider.notifier).switchWorkspace(workspacePath);
@@ -182,23 +195,151 @@ class MainIdeLayout extends ConsumerWidget {
               child: Row(
                 children: [
                   // 1. Left Sidebar (File Explorer)
-                  const SizedBox(
-                    width: 260,
-                    child: FileExplorerPanel(),
-                  ),
-                  VerticalDivider(width: 1, color: Colors.grey[850]),
+                  if (_isLeftSidebarVisible) ...[
+                    SizedBox(
+                      width: isSmallScreen 
+                          ? (screenWidth * 0.6).clamp(200.0, 300.0) 
+                          : _leftSidebarWidth.clamp(200.0, 400.0),
+                      child: Column(
+                        children: [
+                          // Header with close button
+                          Container(
+                            color: const Color(0xFF1E1F20),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            child: Row(
+                              children: [
+                                Icon(Icons.folder, size: 16, color: Colors.grey[400]),
+                                const SizedBox(width: 8),
+                                IconButton(
+                                  icon: Icon(Icons.close, size: 16, color: Colors.grey[400]),
+                                  padding: const EdgeInsets.all(4),
+                                  constraints: const BoxConstraints(),
+                                  onPressed: () {
+                                    setState(() {
+                                      _isLeftSidebarVisible = false;
+                                    });
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Expanded(child: FileExplorerPanel()),
+                        ],
+                      ),
+                    ),
+                    VerticalDivider(width: 1, color: Colors.grey[850]),
+                  ],
 
-                  // 2. Center Area (Code Editor)
-                  const Expanded(
-                    child: CodeEditorPanel(),
+                  // 2. Center Area (Code Editor) with toggle buttons
+                  Expanded(
+                    child: Stack(
+                      children: [
+                        const CodeEditorPanel(),
+                        // Toggle buttons - more prominent
+                        Positioned(
+                          top: 50,
+                          left: 8,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: const Color.fromARGB(255, 39, 36, 82),
+                              borderRadius: BorderRadius.circular(8),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color.fromARGB(255, 43, 31, 75).withOpacity(0.3),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                // Left sidebar toggle
+                                InkWell(
+                                  onTap: () {
+                                    setState(() {
+                                      _isLeftSidebarVisible = !_isLeftSidebarVisible;
+                                    });
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Icon(
+                                      _isLeftSidebarVisible ? Icons.folder_open : Icons.folder,
+                                      size: 20,
+                                      color: _isLeftSidebarVisible ? Colors.blue : Colors.grey[400],
+                                    ),
+                                  ),
+                                ),
+                                Container(
+                                  width: 1,
+                                  height: 20,
+                                  color: Colors.grey[700],
+                                ),
+                                // Right sidebar toggle
+                                InkWell(
+                                  onTap: () {
+                                    setState(() {
+                                      _isRightSidebarVisible = !_isRightSidebarVisible;
+                                    });
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Icon(
+                                      _isRightSidebarVisible ? Icons.smart_toy : Icons.smart_toy_outlined,
+                                      size: 20,
+                                      color: _isRightSidebarVisible ? Colors.blue : Colors.grey[400],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  VerticalDivider(width: 1, color: Colors.grey[850]),
 
-                  // 3. Right Sidebar (AI & Console) - Now with Full AI App
-                  const SizedBox(
-                    width: 320,
-                    child: RightUtilityPanel(),
-                  ),
+                  // 3. Right Sidebar (AI & Console)
+                  if (_isRightSidebarVisible) ...[
+                    VerticalDivider(width: 1, color: Colors.grey[850]),
+                    SizedBox(
+                      width: isSmallScreen 
+                          ? (screenWidth * 0.5).clamp(250.0, 350.0)
+                          : _rightSidebarWidth.clamp(250.0, 500.0),
+                      child: Column(
+                        children: [
+                          // Header with close button
+                          Container(
+                            color: const Color(0xFF1E1F20),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            child: Row(
+                              children: [
+                                Icon(Icons.smart_toy, size: 16, color: Colors.grey[400]),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'AI Assistant',
+                                    style: TextStyle(color: Colors.grey[300], fontSize: 12),
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: Icon(Icons.close, size: 16, color: Colors.grey[400]),
+                                  padding: const EdgeInsets.all(4),
+                                  constraints: const BoxConstraints(),
+                                  onPressed: () {
+                                    setState(() {
+                                      _isRightSidebarVisible = false;
+                                    });
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Expanded(child: RightUtilityPanel()),
+                        ],
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -208,7 +349,7 @@ class MainIdeLayout extends ConsumerWidget {
     );
   }
 
-  void _showNewWorkspaceDialog(BuildContext context, WidgetRef ref) {
+  void _showNewWorkspaceDialog(BuildContext context) {
     final TextEditingController _workspaceNameController = TextEditingController();
     String progressMessage = '';
 

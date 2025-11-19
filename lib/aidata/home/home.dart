@@ -57,7 +57,6 @@ part 'url_scheme.dart';
 part 'req.dart';
 part 'md_copy.dart';
 part 'trash.dart';
-part 'settings_drawer.dart';
 part 'bottom/chatmessage_translator.dart';
 //part '../../widget/v1.dart';
 
@@ -194,7 +193,6 @@ class _HomePageState extends State<HomePage>
       child: Scaffold(
         key: homeScaffoldKey,
         appBar: _CustomAppBar(),
-        endDrawer: AiSettingsDrawerHive(),
         endDrawerEnableOpenDragGesture: true,
         body: _Body(),
         bottomNavigationBar: _HomeBottom(isHome: true),

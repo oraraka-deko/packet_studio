@@ -19,6 +19,7 @@ class MainActivity : FlutterActivity() {
 			.setMethodCallHandler { call, result ->
 				when (call.method) {
 					"runProcess" -> handleRunProcess(call, result)
+					"lib_path" -> handleLibPath(result)
 					else -> result.notImplemented()
 				}
 			}
@@ -28,6 +29,7 @@ class MainActivity : FlutterActivity() {
 		val executable = call.argument<String>("executable")
 		val arguments = call.argument<List<String>>("arguments") ?: emptyList()
 		val workingDirectory = call.argument<String>("workingDirectory")
+		val environment = call.argument<Map<String, String>>("environment")
 
 		if (executable.isNullOrBlank()) {
 			result.error("INVALID_ARGUMENT", "Executable path is required", null)
@@ -36,7 +38,7 @@ class MainActivity : FlutterActivity() {
 
 		thread {
 			try {
-				val response = runProcess(executable, arguments, workingDirectory)
+				val response = runProcess(executable, arguments, workingDirectory, environment)
 				runOnUiThread { result.success(response) }
 			} catch (e: Exception) {
 				runOnUiThread {
@@ -46,10 +48,20 @@ class MainActivity : FlutterActivity() {
 		}
 	}
 
+	private fun handleLibPath(result: MethodChannel.Result) {
+		try {
+			val libDir = applicationContext.applicationInfo.nativeLibraryDir
+			result.success(libDir)
+		} catch (e: Exception) {
+			result.error("LIB_PATH_FAILED", e.localizedMessage ?: "Unable to get native library directory", null)
+		}
+	}
+
 	private fun runProcess(
 		executable: String,
 		arguments: List<String>,
-		workingDirectory: String?
+		workingDirectory: String?,
+		environment: Map<String, String>?
 	): HashMap<String, Any> {
 		val command = mutableListOf(executable)
 		command.addAll(arguments)
@@ -57,6 +69,17 @@ class MainActivity : FlutterActivity() {
 		val builder = ProcessBuilder(command)
 		if (!workingDirectory.isNullOrBlank()) {
 			builder.directory(File(workingDirectory))
+			
+			// Set HOME environment variable to parent of working directory
+			// This is needed for Dart pub to find the cache
+			val workingDir = File(workingDirectory)
+			val homeDir = workingDir.parent ?: workingDirectory
+			builder.environment()["HOME"] = homeDir
+		}
+		
+		// Apply custom environment variables (overrides defaults)
+		if (environment != null) {
+			builder.environment().putAll(environment)
 		}
 
 		val executableFile = File(executable)

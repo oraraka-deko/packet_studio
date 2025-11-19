@@ -9,21 +9,7 @@ class _ChatPage extends StatefulWidget {
 
 class _ChatPageState extends State<_ChatPage>
     with AutomaticKeepAliveClientMixin {
-
-final Map<int, String?> _translatedOverviews = {};
-  final Map<int, bool> _isTranslatingMap = {};
-  final _translator = MovieTvTranslator();
-Future<void> _translateOverviewForEpisode(int key, String original) async {
-    setState(() => _isTranslatingMap[key] = true);
-    try {
-      final translated = await _translator.mainTreanslator(
-        original,
-      );
-      setState(() => _translatedOverviews[key] = translated);
-    } finally {
-      setState(() => _isTranslatingMap[key] = false);
-    }
-  }
+  final Map<int, String?> _translatedOverviews = {};
 
   @override
   Widget build(BuildContext context) {
@@ -45,8 +31,7 @@ Future<void> _translateOverviewForEpisode(int key, String original) async {
       child: ListenBuilder(
         listenable: _chatFabRN,
         builder: () {
-          final valid =
-              _chatScrollCtrl.positions.length == 1 &&
+          final valid = _chatScrollCtrl.positions.length == 1 &&
               _chatScrollCtrl.position.hasContentDimensions &&
               _chatScrollCtrl.position.maxScrollExtent > 0;
           return AnimatedSwitcher(
@@ -70,11 +55,10 @@ Future<void> _translateOverviewForEpisode(int key, String original) async {
     final up =
         _chatScrollCtrl.offset >= _chatScrollCtrl.position.maxScrollExtent / 2;
     final icon = up ? MingCute.up_fill : MingCute.down_fill;
-    return FloatingActionButton(
+    return FloatingActionButton.small(
       key: ValueKey(up),
-      mini: true,
       onPressed: () => _onTapFAB(up),
-      child: Icon(icon),
+      child: Icon(icon, size: 20),
     );
   }
 
@@ -88,9 +72,9 @@ Future<void> _translateOverviewForEpisode(int key, String original) async {
         final item = _curChat?.items;
         if (item == null) return UIs.placeholder;
         final listView = ListView.builder(
-          key: Key(_curChatId.value), // Used for animation
+          key: Key(_curChatId.value),
           controller: _chatScrollCtrl,
-          padding: const EdgeInsets.all(1),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
           physics: const AlwaysScrollableScrollPhysics(
             parent: BouncingScrollPhysics(),
           ),
@@ -137,13 +121,12 @@ Future<void> _translateOverviewForEpisode(int key, String original) async {
     final node = _chatItemRNMap.putIfAbsent(chatItem.id, () => RNode());
 
     if (chatItem.toolCalls != null) {
-      return SizedBox();
+      return const SizedBox.shrink();
     }
 
     final title = switch (chatItem.role) {
-      // User & System msgs have no loading status
-      ChatRole.user ||
-      ChatRole.system => ChatRoleTitle(role: chatItem.role, loading: false),
+      ChatRole.user || ChatRole.system =>
+        ChatRoleTitle(role: chatItem.role, loading: false),
       ChatRole.tool || ChatRole.assist => _loadingChatIds.listenVal((chats) {
         final isLast = chatItems.length - 1 == idx;
         final isWorking = chats.contains(_curChatId.value) && isLast;
@@ -152,41 +135,38 @@ Future<void> _translateOverviewForEpisode(int key, String original) async {
     };
 
     final child = Padding(
-      padding: const EdgeInsets.only(top: 8, left: 11, right: 11, bottom: 0),
+      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           title,
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           ListenBuilder(
             listenable: node,
             builder: () {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Keep existing content rendering (text/images/etc.)
                   ChatHistoryContentView(
                     chatItem: chatItem,
                     postCallback: () {
                       setState(() {});
                     },
                   ),
-                  // Append audio players if any audio contents exist
                   _audioPlayersFor(chatItem),
                 ],
               );
             },
-          ).paddingSymmetric(horizontal: 2),
-          const SizedBox(height: 6),
+          ),
         ],
       ),
     );
 
     final hovers = _buildChatItemHovers(chatItems, chatItem);
-    const pad = 7.0;
+    const pad = 4.0;
 
     final content = InkWell(
-      borderRadius: BorderRadius.circular(13),
+      borderRadius: BorderRadius.circular(10),
       onLongPress: () => _onLongPressChatItem(context, chatItems, chatItem),
       child: child,
     );
@@ -200,8 +180,8 @@ Future<void> _translateOverviewForEpisode(int key, String original) async {
               final hover = AnimatedContainer(
                 duration: Durations.medium1,
                 curve: Curves.fastEaseInToSlowEaseOut,
-                width: isHovered ? (hovers.length * 33 + 2 * pad) : 0,
-                height: 30,
+                width: isHovered ? (hovers.length * 28 + 2 * pad) : 0,
+                height: 28,
                 padding: const EdgeInsets.symmetric(horizontal: pad),
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
@@ -225,24 +205,15 @@ Future<void> _translateOverviewForEpisode(int key, String original) async {
     );
   }
 
-  // Treat both file paths and data URLs as audio
   bool looksLikeAudioDataUrl(String s) {
     final v = s.trim().toLowerCase();
-    return (v.contains('data:audio/') == true 
-//    ||            v.contains('data:image/') == true
-            )
-        ? true
-        : false;
+    return v.contains('data:audio/');
   }
 
   bool _isAudioContent(ChatContent c) {
-    // File path with audio extension
     if (c.type.isFile && isAudioPath(c.raw)) return true;
-    // Inline base64 audio data url
     if (c.type.isText && looksLikeAudioDataUrl(c.raw)) return true;
-    // Fallback: if content claims to be audio in your model (if any)
-    return c.type.isAudio; // uncomment if you have such a type
-    // return false;
+    return c.type.isAudio;
   }
 
   Widget _audioPlayersFor(ChatHistoryItem item) {
@@ -254,7 +225,7 @@ Future<void> _translateOverviewForEpisode(int key, String original) async {
       children: [
         for (final c in audio)
           Padding(
-            padding: const EdgeInsets.only(top: 8.0),
+            padding: const EdgeInsets.only(top: 6.0),
             child: audioTileFor(c),
           ),
       ],
@@ -262,7 +233,6 @@ Future<void> _translateOverviewForEpisode(int key, String original) async {
   }
 
   Widget audioTileFor(ChatContent c) {
-    // Case 1: file path stored in raw
     if (isAudioPath(c.raw)) {
       final f = File(c.raw);
       return FutureBuilder<Uint8List>(
@@ -272,23 +242,18 @@ Future<void> _translateOverviewForEpisode(int key, String original) async {
             return _audioSkeleton();
           }
           if (snap.hasError || !snap.hasData || (snap.data?.isEmpty ?? true)) {
-            return audioError('Failed to load audio file');
+            return audioError('Failed to load audio');
           }
           final ensured = ensureWavBytes(
             snap.data!,
             sampleRate: kTtsSampleRate,
             channels: 1,
           );
-          return AudioPlayerTile(
-            bytes: ensured,
-            file: f,
-            // autoPlay: true, // enable if you want first-time autoplay
-          );
+          return AudioPlayerTile(bytes: ensured, file: f);
         },
       );
     }
 
-    // Case 2: data URL like "data:audio/wav;base64,...." (or raw PCM16)
     if (c.type.isText && looksLikeAudioDataUrl(c.raw)) {
       try {
         final comma = c.raw.indexOf(',');
@@ -301,11 +266,10 @@ Future<void> _translateOverviewForEpisode(int key, String original) async {
         );
         return AudioPlayerTile(bytes: ensured);
       } catch (_) {
-        return audioError('Invalid audio data URL');
+        return audioError('Invalid audio');
       }
     }
 
-    // Fallback: treat raw as base64 string if any
     try {
       final comma = c.raw.indexOf(',');
       final body = comma >= 0 ? c.raw.substring(comma + 1) : c.raw;
@@ -317,23 +281,9 @@ Future<void> _translateOverviewForEpisode(int key, String original) async {
       );
       return AudioPlayerTile(bytes: ensured);
     } catch (_) {
-      return audioError('Unsupported audio payload');
+      return audioError('Unsupported audio');
     }
   }
-
-  // Case 2: data URL like "data:audio/wav;base64,...." (or raw PCM16)
-  //   } else if (v.contains('data:image/') == true) {
-  //     return Padding(
-  //       padding: const EdgeInsets.symmetric(vertical: 8.0),
-  //       child: ClipRRect(
-  //         //   borderRadius: theme.codeBlockRadius,
-  //         child: Base64ImageDisplay(fit: BoxFit.cover, base64String: c.raw,),
-  //       ),
-  //     );
-  //   }
-  //   // Fallback: return an empty widget if nothing matches
-  //   return const SizedBox.shrink();
-  // }
 
   Future<Uint8List> _readFileBytesSafe(File f) async {
     try {
@@ -345,16 +295,16 @@ Future<void> _translateOverviewForEpisode(int key, String original) async {
 
   Widget _audioSkeleton() {
     return Container(
-      height: 66,
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      height: 50,
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: Colors.black12,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(8),
       ),
       child: const Center(
         child: SizedBox(
-          height: 20,
-          width: 20,
+          height: 16,
+          width: 16,
           child: CircularProgressIndicator(strokeWidth: 2),
         ),
       ),
@@ -363,14 +313,15 @@ Future<void> _translateOverviewForEpisode(int key, String original) async {
 
   Widget audioError(String msg) {
     return Container(
-      height: 66,
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      height: 50,
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: Colors.red.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Center(
-        child: Text(msg, style: const TextStyle(color: Colors.redAccent)),
+        child: Text(msg,
+            style: const TextStyle(color: Colors.redAccent, fontSize: 12)),
       ),
     );
   }
@@ -379,12 +330,10 @@ Future<void> _translateOverviewForEpisode(int key, String original) async {
     List<ChatHistoryItem> chatItems,
     ChatHistoryItem chatItem,
   ) {
-        final int key = chatItems.index(chatItem);
-    /// TODO  remember to implanting this => final bool isTranslating = _isTranslatingMap[key] == true;
+    final int key = chatItems.index(chatItem);
     final String? translated = _translatedOverviews[key];
-
     final replayEnabled = chatItem.role.isUser;
-    const size = 18.0;
+    const size = 16.0;
     final color = context.theme.iconTheme.color?.withValues(alpha: 0.8);
 
     return [
@@ -396,30 +345,6 @@ Future<void> _translateOverviewForEpisode(int key, String original) async {
         text: l10n.freeCopy,
         icon: Icon(BoxIcons.bxs_crop, size: size, color: color),
       ),
-  //      Btn.icon(
-  //       onTap: () async {
-  //         context.pop();
-  //       final tbase= await _MarkdownCopyPage.route.go(context, chatItem);
-  //   if (translated != null) {
-  //     setState(() => _translatedOverviews.remove(key));
-  //     return;
-  //   }
-  //   await _translateOverviewForEpisode(key, tbase);
-  //   if (_translatedOverviews[key] != null) {
-  //   chatItem.content.clear();
-  //   chatItem.content.add(ChatContent.text(translated!=''?translated!:'a problem exist in translation process that return translated text as ""'));
-  //   _storeChat(_curChatId.value);
-  //   _chatRN.notify();
-  //   context.pop();
-  // ///TODO  creating functions too can with one click switch between original message and translated one 
-
-  //     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Chat Message translated'), duration: Duration(seconds:1)));
-  //   }
-
-  //       },
-  //       text: l10n.freeCopy,
-  //       icon: Icon(BoxIcons.bxs_crop, size: size, color: color),
-  //     ),
       if (replayEnabled)
         _loadingChatIds.listenVal((chats) {
           final isWorking = chats.contains(_curChatId.value);
@@ -474,7 +399,7 @@ Future<void> _translateOverviewForEpisode(int key, String original) async {
           _MarkdownCopyPage.route.go(context, chatItem);
         },
         text: l10n.freeCopy,
-        icon: const Icon(BoxIcons.bxs_crop),
+        icon: const Icon(BoxIcons.bxs_crop, size: 18),
       ),
       if (replayEnabled)
         _loadingChatIds.listenVal((chats) {
@@ -486,7 +411,7 @@ Future<void> _translateOverviewForEpisode(int key, String original) async {
               _onTapReplay(context, _curChatId.value, chatItem);
             },
             text: l10n.replay,
-            icon: const Icon(MingCute.refresh_4_line),
+            icon: const Icon(MingCute.refresh_4_line, size: 18),
           );
         }),
       if (replayEnabled)
@@ -496,7 +421,7 @@ Future<void> _translateOverviewForEpisode(int key, String original) async {
             _onTapEditMsg(context, chatItem);
           },
           text: libL10n.edit,
-          icon: const Icon(Icons.edit),
+          icon: const Icon(Icons.edit, size: 18),
         ),
       Btn.tile(
         onTap: () {
@@ -504,7 +429,7 @@ Future<void> _translateOverviewForEpisode(int key, String original) async {
           _onTapDelChatItem(context, chatItems, chatItem);
         },
         text: l10n.delete,
-        icon: const Icon(Icons.delete),
+        icon: const Icon(Icons.delete, size: 18),
       ),
       Btn.tile(
         onTap: () {
@@ -512,7 +437,7 @@ Future<void> _translateOverviewForEpisode(int key, String original) async {
           Pfs.copy(chatItem.toMarkdown);
         },
         text: libL10n.copy,
-        icon: const Icon(MingCute.copy_2_fill),
+        icon: const Icon(MingCute.copy_2_fill, size: 18),
       ),
     ];
   }
@@ -543,7 +468,7 @@ extension on _ChatPageState {
   ) {
     final funcs = _buildChatItemFuncs(chatItems, chatItem);
     context.showRoundDialog(
-      contentPadding: const EdgeInsets.all(11),
+      contentPadding: const EdgeInsets.all(8),
       child: SingleChildScrollView(
         child: Column(mainAxisSize: MainAxisSize.min, children: funcs),
       ),
@@ -551,22 +476,11 @@ extension on _ChatPageState {
   }
 }
 
-/// A widget that animates its child's visibility and size based on a boolean condition.
-///
-/// When [showContent] is true, the [child] fades in and expands.
-/// When [showContent] is false, the [child] fades out and collapses to a SizedBox.shrink().
 class AnimatedConditionalWidget extends StatefulWidget {
-  /// Whether the [child] should be shown.
-  /// Set to `true` to show content, `false` to hide.
   final bool showContent;
-
-  /// The widget to be animated in or out.
   final Widget child;
-
-  /// The duration of the animation.
   final Duration animationDuration;
 
-  /// Creates an [AnimatedConditionalWidget].
   const AnimatedConditionalWidget({
     super.key,
     required this.showContent,
@@ -593,7 +507,6 @@ class _AnimatedConditionalWidgetState extends State<AnimatedConditionalWidget>
       duration: widget.animationDuration,
     );
 
-    // Opacity animation: starts fading a bit earlier.
     _opacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
@@ -601,7 +514,6 @@ class _AnimatedConditionalWidgetState extends State<AnimatedConditionalWidget>
       ),
     );
 
-    // Size animation: starts expanding/collapsing a bit later.
     _sizeFactorAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
@@ -609,7 +521,6 @@ class _AnimatedConditionalWidgetState extends State<AnimatedConditionalWidget>
       ),
     );
 
-    // Initialize the state based on showContent
     if (widget.showContent) {
       _controller.forward();
     }
@@ -635,13 +546,9 @@ class _AnimatedConditionalWidgetState extends State<AnimatedConditionalWidget>
 
   @override
   Widget build(BuildContext context) {
-    // We use SizeTransition to animate the height.
-    // axisAlignment: -1.0 ensures the content collapses upwards (to the start of the axis).
-    // The child of SizeTransition will then be wrapped by FadeTransition for opacity.
     return SizeTransition(
       sizeFactor: _sizeFactorAnimation,
-      axisAlignment:
-          -1.0, // Aligns to the top when collapsing/expanding vertically.
+      axisAlignment: -1.0,
       child: FadeTransition(opacity: _opacityAnimation, child: widget.child),
     );
   }
@@ -698,7 +605,7 @@ class Base64Image extends StatelessWidget {
 
     final bytes = _decodeBase64(base64!.trim());
     if (bytes == null || bytes.isEmpty) {
-      return _wrap(errorWidget ?? const Icon(Icons.broken_image));
+      return _wrap(errorWidget ?? const Icon(Icons.broken_image, size: 24));
     }
 
     final image = Image.memory(
@@ -746,28 +653,3 @@ class AudioEvent extends ChatEvent {
 
 final base64ImageRegex = RegExp(r'data:image\/\w+;base64,([A-Za-z0-9+/=]+)');
 final base64AudioRegex = RegExp(r'data:audio\/\w+;base64,([A-Za-z0-9+/=]+)');
-
-// class ChatStreamTransformer
-//     extends StreamTransformerBase<String, ChatEvent> {
-//   @override
-//   Stream<ChatEvent> bind(StringBuffer stream) async* {
-//     final buffer = StringBuffer();
-
-//     await for (final chunk in stream) {
-//       buffer.write(chunk);
-
-//       final matches = base64ImageRegex.allMatches(buffer.toString());
-//       if (matches.isNotEmpty) {
-//         for (final match in matches) {
-//           final base64Data = match.group(1)!;
-//           final bytes = base64Decode(base64Data);
-//           yield ImageEvent(bytes);
-//         }
-//         // Remove matched content from buffer
-//         buffer.clear();
-//       } else {
-//         yield TextEvent(chunk);
-//       }
-//     }
-//   }
-// }

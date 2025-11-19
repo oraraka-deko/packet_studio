@@ -52,7 +52,7 @@ void _onIsWideChanged() {
 }
 
 /// Mobile has higher density.
-final _historyItemHeight = isDesktop ? 73.0 : 79.0;
+final _historyItemHeight = 65.0;
 
 /// The pixel tollerance
 final _historyLocateTollerance = _historyItemHeight / 3;

@@ -5,7 +5,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:studio_packet/utils/utils.dart';
+import 'package:studio_packet/utils/native_utils.dart';
 import 'package:path/path.dart' as p;
+import 'package:root_plus/root_plus.dart';
 
 class SetupService {
   static const String _isFirstRunKey = 'isFirstRun';
@@ -13,6 +15,32 @@ class SetupService {
   static const String _dartSdkPathKey = 'dartSdkPath';
   static const String _workspacePathKey = 'workspacePath';
   static const MethodChannel _nativeProcessChannel = MethodChannel('studio_packet/native_process');
+
+  /// Get the Dart executable path
+  /// 
+  /// On Android, tries to use the JNI library (libdart.so) first if available.
+  /// Falls back to the extracted SDK path otherwise.
+  /// 
+  /// Returns null if the Dart SDK is not set up.
+  Future<String?> getDartExecutablePath() async {
+    final prefs = await SharedPreferences.getInstance();
+    final dartSdkPath = prefs.getString(_dartSdkPathKey);
+    
+    if (dartSdkPath == null || dartSdkPath.isEmpty) {
+      return null;
+    }
+
+    // Try to use JNI library path first (Android only)
+    if (Platform.isAndroid) {
+      final jniDartPath = await NativeUtils.getDartBinaryPath();
+      if (jniDartPath != null) {
+        return jniDartPath;
+      }
+    }
+
+    // Fallback to extracted SDK
+    return p.join(dartSdkPath, 'bin', 'dart');
+  }
 
   Future<bool> isFirstRun() async {
     final prefs = await SharedPreferences.getInstance();
@@ -94,13 +122,47 @@ class SetupService {
       throw Exception('Sandbox path is not initialized.');
     }
 
-    final dartExecutable = p.join(dartSdkPath, 'bin', 'dart');
-    await _ensureExecutablePermission(dartExecutable);
+    // Try to use JNI library path first (Android only)
+    String dartExecutable;
+    if (Platform.isAndroid) {
+      final jniDartPath = await NativeUtils.getDartBinaryPath();
+      if (jniDartPath != null) {
+        dartExecutable = jniDartPath;
+        if (kDebugMode) {
+          debugPrint('Using Dart binary from JNI library: $dartExecutable');
+        }
+      } else {
+        // Fallback to extracted SDK
+        dartExecutable = p.join(dartSdkPath, 'bin', 'dart');
+        await _ensureExecutablePermission(dartExecutable);
+        if (kDebugMode) {
+          debugPrint('JNI library not found, using extracted SDK: $dartExecutable');
+        }
+      }
+    } else {
+      dartExecutable = p.join(dartSdkPath, 'bin', 'dart');
+      await _ensureExecutablePermission(dartExecutable);
+    }
 
+    // Set HOME and TMPDIR environment variables for Dart pub
+    // Create a temp directory within sandbox for Dart to use
+    final tmpDir = Directory(p.join(sandboxPath, 'tmp'));
+    if (!await tmpDir.exists()) {
+      await tmpDir.create(recursive: true);
+    }
+    
+    final environment = <String, String>{
+      'HOME': sandboxPath,
+      'TMPDIR': tmpDir.path,
+      'TEMP': tmpDir.path,
+      'TMP': tmpDir.path,
+    };
+    
     final result = await runProcess(
       dartExecutable,
       ['create', projectName],
       workingDirectory: sandboxPath,
+      environment: environment,
     );
 
     if (result.exitCode != 0) {
@@ -114,6 +176,7 @@ class SetupService {
     String executable,
     List<String> arguments, {
     String? workingDirectory,
+    Map<String, String>? environment,
   }) async {
     if (Platform.isAndroid) {
       final response = await _nativeProcessChannel.invokeMapMethod<String, dynamic>(
@@ -122,6 +185,7 @@ class SetupService {
           'executable': executable,
           'arguments': arguments,
           'workingDirectory': workingDirectory,
+          if (environment != null) 'environment': environment,
         },
       );
 
@@ -140,6 +204,7 @@ class SetupService {
       executable,
       arguments,
       workingDirectory: workingDirectory,
+      environment: environment,
     );
 
     return ProcessExecutionResult(
@@ -150,8 +215,8 @@ class SetupService {
   }
 
   Future<void> _ensureExecutablePermission(String executablePath) async {
-    if (Platform.isWindows || Platform.isAndroid) {
-      // Windows does not use executable bits and Android will handle permissions natively.
+    if (Platform.isWindows) {
+      // Windows does not use executable bits
       return;
     }
 
@@ -160,14 +225,105 @@ class SetupService {
       throw Exception('Executable not found at $executablePath');
     }
 
-    final stat = await executable.stat();
-    if (stat.modeString().contains('x')) {
-      return;
+    // Check if already executable
+    if (Platform.isAndroid) {
+      // On Android, try to check if file is executable
+      // If not, we'll try multiple methods
+      final stat = await executable.stat();
+      if (stat.modeString().contains('x')) {
+        return;
+      }
+    } else {
+      final stat = await executable.stat();
+      if (stat.modeString().contains('x')) {
+        return;
+      }
     }
 
-    final chmodResult = await Process.run('chmod', ['+x', executablePath]);
-    if (chmodResult.exitCode != 0 && kDebugMode) {
-      debugPrint('Unable to mark $executablePath as executable: ${chmodResult.stderr}');
+    // Try normal chmod first
+    try {
+      final chmodResult = await Process.run('chmod', ['+x', executablePath]);
+      if (chmodResult.exitCode == 0) {
+        if (kDebugMode) {
+          debugPrint('Successfully set executable permission using chmod');
+        }
+        return;
+      }
+      if (kDebugMode) {
+        debugPrint('chmod failed: ${chmodResult.stderr}');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('chmod exception: $e');
+      }
+    }
+
+    // Last fallback: Try using root access on Android if device is rooted
+    if (Platform.isAndroid) {
+      try {
+        final isRooted = await _checkIfDeviceIsRooted();
+        if (isRooted) {
+          if (kDebugMode) {
+            debugPrint('Device is rooted, attempting to use root access for chmod');
+          }
+          await _chmodWithRoot(executablePath);
+        } else {
+          if (kDebugMode) {
+            debugPrint('Device is not rooted, cannot use root fallback');
+          }
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          debugPrint('Root fallback failed: $e');
+        }
+      }
+    }
+  }
+
+  /// Check if the Android device is rooted
+  Future<bool> _checkIfDeviceIsRooted() async {
+    try {
+      final isRooted = await RootPlus.requestRootAccess();
+      if (kDebugMode) {
+        debugPrint('Root check result: $isRooted');
+      }
+      return isRooted;
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Error checking root status: $e');
+      }
+      return false;
+    }
+  }
+
+  /// Use root access to set executable permission
+  Future<void> _chmodWithRoot(String executablePath) async {
+    try {
+      // Request root access if not already granted
+      final hasRoot = await RootPlus.requestRootAccess();
+      if (hasRoot != true) {
+        if (kDebugMode) {
+          debugPrint('Root access not granted');
+        }
+        return;
+      }
+
+      // Execute chmod with root privileges
+      final result = await RootPlus.executeRootCommand('chmod +x "$executablePath"');
+      if (result.isNotEmpty) {
+        if (kDebugMode) {
+          debugPrint('Root chmod result: $result');
+        }
+      }
+      
+      if (kDebugMode) {
+        debugPrint('Successfully set executable permission using root access');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Failed to set executable permission with root: $e');
+      }
+      rethrow;
     }
   }
 }
