@@ -1,0 +1,146 @@
+import 'dart:convert';
+
+import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:studio_packet/aidata/data/res/l10n.dart';
+import 'package:studio_packet/aidata/data/store/all.dart';
+import 'package:shortid/shortid.dart';
+
+part 'config.g.dart';
+part 'config.freezed.dart';
+
+@freezed
+abstract class ChatConfig with _$ChatConfig {
+  const ChatConfig._();
+
+  const factory ChatConfig({
+    @Default('') String prompt,
+    @Default(ChatConfigX.defaultUrl) String url,
+    @Default('') String key,
+    @Default('') String model,
+    @Default(ChatConfigX.defaultHistoryLen) int historyLen,
+    @Default(ChatConfigX.defaultId) String id,
+    @Default('') String name,
+    String? genTitlePrompt,
+    String? genTitleModel,
+    String? imgModel,
+    String? audioModel,
+    String? tskrModel,
+    String? altrModel,
+    String? wrkrModel,
+        String? trnscrbModel,
+        String? defaultTranslateLanguage,
+
+    // Newly added nullable fields
+    String? file,
+    String? image,
+    String? audio,
+       bool? isVertex,
+   String? vertexProjectId,
+   String? vertexLocation
+  }) = _ChatConfig;
+
+  factory ChatConfig.fromJson(Map<String, dynamic> json) =>
+      _$ChatConfigFromJson(json);
+
+  @override
+  String toString() => 'ChatConfig($id, $url, $model)';
+}
+
+extension ChatConfigX on ChatConfig {
+  static final apiUrlReg = RegExp(r'^https?://[0-9A-Za-z\.]+(:\d+)?$');
+  static const defaultId = 'defaultId';
+  static const defaultUrl = 'https://api.openai.com/v1';
+  static const defaultHistoryLen = 7;
+  static const defaultImgModel = 'dall-e-3';
+  static const defaultaudioModel = 'gpt-4o-mini-audio-preview';
+    static const defaulttrnscrbModel = 'gpt-4o-mini-transcribe-preview';
+    static const defaulttaskrModel = 'gemini-2.5-flash';
+    static const defaultaltrModel = 'gemini-2.5-flash-lite';
+        static const defaultwrkrModel = 'gpt-4.1-mini';
+        static const defaultTranslateLanguage= 'English';
+        static const isVertex= false;
+        static const vertexProjectId = '';
+        static const vertexLocation ='';
+
+
+  static const defaultOne = ChatConfig(
+    id: defaultId,
+    prompt: '',
+    url: defaultUrl,
+    key: '',
+    model: '',
+    historyLen: defaultHistoryLen,
+    name: '',
+    imgModel: defaultImgModel,
+    defaultTranslateLanguage: 'English',
+    isVertex: isVertex,
+    vertexProjectId: vertexProjectId,
+    vertexLocation: vertexLocation
+    // audioModel: defaultaudioModel,
+    // trnscrbModel: defaulttrnscrbModel,
+    // tskrModel: defaulttaskrModel,
+    // altrModel: defaultaltrModel,
+    // wrkrModel: defaultwrkrModel,
+  );
+
+  String get displayName => switch (id) {
+        // Corresponding as `id == defaultId && name.isEmpty`
+        defaultId when name.isEmpty => l10n.defaulT,
+        _ => name,
+      };
+
+  void save() => Stores.config.put(this);
+
+  bool shouldUpdateRelated(ChatConfig old) {
+    if (id != old.id) return true;
+    if (key != old.key) return true;
+    if (url != old.url) return true;
+    return false;
+  }
+
+  bool get isDefault => id == defaultId;
+
+  /// Get share url.
+  ///
+  /// eg.: lpkt.cn://gptbox/profile?params=...
+  String get shareUrl {
+    final jsonStr = json.encode(toJson());
+    final urlEncoded = Uri.encodeComponent(jsonStr);
+    return""; 
+    //'${AppLink.prefix}${AppLink.profilePath}?params=$urlEncoded';
+  }
+
+  /// Parse url params to [ChatConfig].
+  static ChatConfig fromUrlParams(String params) {
+    final params_ = json.decode(params) as Map<String, dynamic>;
+    return ChatConfig(
+      id: params_['id'] ?? shortid.generate(),
+      url: params_['url'] ?? defaultUrl,
+      key: params_['key'] ?? '',
+      model: params_['model'] ?? '',
+      prompt: params_['prompt'] ?? '',
+      name: params_['name'] ?? '',
+      genTitlePrompt: params_['genTitlePrompt'],
+      genTitleModel: params_['genTitleModel'],
+      imgModel: params_['imgModel'],
+      // Parse newly added nullable fields
+      file: params_['file'],
+      image: params_['image'],
+      audio: params_['audio'],
+      historyLen: params_['historyLen'] ?? defaultHistoryLen,
+      tskrModel: params_['TaskerModel']??defaulttaskrModel,
+            audioModel: params_['AudioModel']??defaultaudioModel,
+                  altrModel: params_['AlterModel']??defaultaltrModel,
+
+      wrkrModel: params_['TaskerModel']??defaultwrkrModel,
+            trnscrbModel: params_['TaskerModel']??defaulttrnscrbModel,
+            defaultTranslateLanguage: params_['defaultTranslateLanguage']??defaultTranslateLanguage,
+             isVertex: params_['isVertex'],
+      vertexProjectId: params_['vertexProjectId'],
+      vertexLocation: params_['vertexLocation'],
+
+
+
+    );
+  }
+}

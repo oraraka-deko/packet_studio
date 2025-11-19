@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/workspace_provider.dart';
-import '../widgets/AiPromptBar.dart';
 import '../widgets/CodeEditorPanel.dart';
 import '../widgets/FileExplorerPanel.dart';
 import '../widgets/RightUtilityPanel.dart';
@@ -194,7 +193,7 @@ class MainIdeLayout extends ConsumerWidget {
                   ),
                   VerticalDivider(width: 1, color: Colors.grey[850]),
 
-                  // 3. Right Sidebar (AI & Console)
+                  // 3. Right Sidebar (AI & Console) - Now with Full AI App
                   const SizedBox(
                     width: 320,
                     child: RightUtilityPanel(),
@@ -202,9 +201,6 @@ class MainIdeLayout extends ConsumerWidget {
                 ],
               ),
             ),
-
-            // Bottom AI Prompt Bar
-            const AiPromptBar(),
           ],
         ),
       ),

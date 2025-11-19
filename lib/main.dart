@@ -1,12 +1,47 @@
+// ignore_for_file: avoid_print
+
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:logging/logging.dart';
 import 'package:studio_packet/providers/setup_provider.dart';
 import 'package:studio_packet/screens/mainAppScreen.dart';
 import 'package:studio_packet/screens/splash_screen.dart';
 import 'package:studio_packet/services/setup_service.dart';
 
 void main() {
-  runApp(const ProviderScope(child: MyApp()));
+  _runInZone(() async {
+    await _initApp();
+    runApp(const ProviderScope(child: MyApp()));
+  });
+}
+
+void _runInZone(void Function() body) {
+  final zoneSpec = ZoneSpecification(
+    print: (_, parent, zone, line) => parent.print(zone, line),
+  );
+
+  runZonedGuarded(
+    body,
+    (e, s) => print('[ZONE] $e\n$s'),
+    zoneSpecification: zoneSpec,
+  );
+}
+
+Future<void> _initApp() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  _setupLogger();
+}
+
+
+void _setupLogger() {
+  Logger.root.level = Level.ALL;
+  Logger.root.onRecord.listen((record) {
+    print('[${record.level.name}] ${record.loggerName}: ${record.message}');
+    if (record.error != null) print('Error: ${record.error}');
+    if (record.stackTrace != null) print('StackTrace: ${record.stackTrace}');
+  });
 }
 
 class MyApp extends ConsumerWidget {
