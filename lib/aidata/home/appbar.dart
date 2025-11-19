@@ -5,6 +5,7 @@ final class _CustomAppBar extends CustomAppBar {
 
   @override
   Widget build(BuildContext context) {
+    // Minimalist Title Logic
     final title = _appbarTitleVN.listenVal(
       (val) {
         return AnimatedSwitcher(
@@ -15,39 +16,41 @@ final class _CustomAppBar extends CustomAppBar {
             position: animation,
             child: FadeTransition(opacity: animation, child: child),
           ),
-          // Use a SizedBox to avoid the title jumping when switching chats.
-          child: SizedBox(
-            width: context.windowSize.width * 0.5,
-            child: Text(
-              val ?? l10n.untitled,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.left,
-              style: UIs.text15,
-            ),
+          // Removed fixed SizedBox width to allow full usage of tiny screens
+          child: Text(
+            val ?? l10n.untitled,
+            key: ValueKey(val), // Added Key for proper animation
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.left,
+            style: UIs.text15.copyWith(height: 1.2), // Tighten line height
           ),
         );
       },
     );
 
+    // Minimalist Subtitle Logic
     final subtitle = Cfg.vn.listen(() {
       return Cfg.chatType.listenVal((typ) {
-        final model = typ.model ?? '';
+        final model = typ.model ?? 'model';
         return Text(
           model.isEmpty ? libL10n.empty : model,
           key: ValueKey(model),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           textAlign: TextAlign.left,
-          style: UIs.text12Grey,
+          // Slightly smaller font for better hierarchy on small screens
+          style: UIs.text12Grey.copyWith(fontSize: 10, height: 1.0), 
         );
       });
     });
 
     return CustomAppBar(
       centerTitle: false,
+      // Reduced padding on leading button if possible within Btn.icon, 
+      // otherwise kept standard to ensure touch targets remain accessible.
       leading: Btn.icon(
-        icon: const Icon(Icons.settings),
+        icon: const Icon(Icons.settings, size: 20), // Slightly smaller icon
         onTap: () async {
           final ret = await SettingsPage.route.go(context);
           if (ret?.restored == true) {
@@ -58,27 +61,29 @@ final class _CustomAppBar extends CustomAppBar {
       title: GestureDetector(
         onLongPress: () => DebugPage.route.go(context),
         onTap: () => _onSwitchModel(context, notifyKey: true),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            title,
-            SizedBox(
-              width: context.windowSize.width * 0.5,
-              child: Row(
+        child: Container(
+          // Ensure hit test covers the area but doesn't force width
+          color: Colors.transparent, 
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Flexible(child: title),
+              Row(
                 mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  subtitle,
+                  Flexible(child: subtitle),
+                  const SizedBox(width: 2),
                   const Icon(
                     Icons.keyboard_arrow_down,
-                    size: 15,
+                    size: 10, // Minimal icon size
                     color: Colors.grey,
                   )
                 ],
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
       actions: [

@@ -872,7 +872,7 @@ packages:
     source: hosted
     version: "2.2.0"
   icons_plus:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: icons_plus
       sha256: "8e2f601b8605d45dd55b106a0da084a1809125077a49574ca22e8bcd5b6e86f0"
@@ -1442,7 +1442,7 @@ packages:
     source: hosted
     version: "1.0.7"
   responsive_framework:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: responsive_framework
       sha256: a8e1c13d4ba980c60cbf6fa1e9907cd60662bf2585184d7c96ca46c43de91552

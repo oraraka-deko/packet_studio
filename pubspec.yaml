@@ -51,6 +51,8 @@ dependencies:
   hive_ce: ^2.15.1
   telegram_crash_reporter: ^1.0.0
   equatable: ^2.0.7
+  responsive_framework: ^1.5.1
+  icons_plus: ^5.0.0
 dev_dependencies:
   flutter_test:
     sdk: flutter

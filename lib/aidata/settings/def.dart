@@ -14,8 +14,6 @@ enum SettingsTab {
   app,
   profile,
   tool,
-  res,
-  bak,
   
   about,
   ;
@@ -24,8 +22,6 @@ enum SettingsTab {
         app => libL10n.app,
         profile => l10n.profile,
         tool => l10n.tool,
-        res => l10n.res,
-        bak => libL10n.backup,
         
         about => libL10n.about,
       };
@@ -34,12 +30,9 @@ enum SettingsTab {
         app => const AppSettingsPage(),
         profile => const ProfilePage(),
         tool => const McpPage(),
-        res => const ResPage(),
         
         about => const AboutPage(),
-    SettingsTab.bak => AboutPage(),
-      };
-
+  };
   static List<Tab> get tabs => values.map((e) => Tab(text: e.i18n)).toList();
 
   static List<Widget> get pages => values.map((e) => e.page).toList();

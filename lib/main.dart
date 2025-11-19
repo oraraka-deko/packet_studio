@@ -3,20 +3,52 @@
 import 'dart:async';
 import 'dart:ui';
 
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:logging/logging.dart';
+import 'package:studio_packet/aidata/data/model/chat/history/hive_adapter.dart';
+import 'package:studio_packet/aidata/data/store/all.dart';
+import 'package:studio_packet/aidata/hive/hive_registrar.g.dart';
 import 'package:studio_packet/providers/setup_provider.dart';
 import 'package:studio_packet/screens/mainAppScreen.dart';
 import 'package:studio_packet/screens/splash_screen.dart';
 import 'package:studio_packet/services/setup_service.dart';
 import 'package:studio_packet/utils/telegram_reporter.dart';
 
+import 'aidata/data/res/build_data.dart';
+import 'aidata/data/res/openai.dart';
 void main() {
   _runInZone(() async {
     await _initApp();
-    await TelegramReporter.init(
-      botToken: '',
+
+
+    runApp(const ProviderScope(child: MyApp()));
+  });
+}
+
+void _runInZone(void Function() body) {
+  final zoneSpec = ZoneSpecification(
+    print: (_, parent, zone, line) => parent.print(zone, line),
+  );
+
+  runZonedGuarded(
+    body,
+    (e, s) => TelegramReporter.reportError(e, s, null, 'ZONE', true),
+    zoneSpecification: zoneSpec,
+  );
+}
+
+Future<void> _initApp() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Paths.init(BuildData.name);
+  await _initDb();
+
+  _setupLogger();
+  _initAppComponents();
+      await TelegramReporter.init(
+      botToken: '8398202728:AAEgzM4caycMjfYQUQGyI9PC0uVfwIT63LI',
       chatId: 6865643282, // YOUR_CHAT_ID
     );
   // Catch Flutter UI framework errors
@@ -44,28 +76,22 @@ void main() {
     TelegramReporter.reportError(errorDetails.exception, errorDetails.stack!, null, 'Error Widget', false);
     return ErrorWidget(errorDetails.exception);
   };
-
-    runApp(const ProviderScope(child: MyApp()));
-  });
 }
-
-void _runInZone(void Function() body) {
-  final zoneSpec = ZoneSpecification(
-    print: (_, parent, zone, line) => parent.print(zone, line),
-  );
-
-  runZonedGuarded(
-    body,
-    (e, s) => TelegramReporter.reportError(e, s, null, 'ZONE', true),
-    zoneSpecification: zoneSpec,
-  );
+Future<void> _initDb() async {
+  await Hive.initFlutter();
+  Hive.registerAdapters();
+  // You are trying to register DateTimeAdapter (typeId 4) for type DateTime
+  // but there is already a TypeAdapter for this type: DateTimeWithTimezoneAdapter (typeId 18).
+  // Note that DateTimeAdapter will have no effect as DateTimeWithTimezoneAdapter takes precedence.
+  // If you want to override the existing adapter, the typeIds must match.
+  // Hive.registerAdapter(DateTimeAdapter()); // 4
+  // Hive.registerAdapter(TranslatorConfigAdapter());//25
+  
+  Hive.registerAdapter(ChatCompletionMessageToolCallAdapter()); // 9
+  Hive.registerAdapter(ChatCompletionMessageFunctionCallAdapter()); // 10
+ await PrefStore.shared.init();
+  await Stores.init();
 }
-
-Future<void> _initApp() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  _setupLogger();
-}
-
 
 void _setupLogger() {
   Logger.root.level = Level.ALL;
@@ -74,6 +100,31 @@ void _setupLogger() {
     if (record.error != null) print('Error: ${record.error}');
     if (record.stackTrace != null) print('StackTrace: ${record.stackTrace}');
   });
+}
+
+Future<void> _initAppComponents() async {
+  // DeepLinks.appId = AppLink.host;
+  UserApi.init();
+
+  final sets = Stores.setting;
+  final windowStateProp = sets.windowState;
+  final windowState = windowStateProp.fetch();
+  await SystemUIs.initDesktopWindow(
+    hideTitleBar: sets.hideTitleBar.get(),
+    size: windowState?.size,
+    position: windowState?.position,
+    listener: WindowStateListener(windowStateProp),
+  );
+
+  Cfg.applyClient();
+  Cfg.updateModels();
+
+  //  BakSync.instance.init();
+  //  BakSync.instance.sync();
+
+  // if (Stores.setting.joinBeta.get()) AppUpdate.chan = AppUpdateChan.beta;
+
+  Stores.trash.autoDelete();
 }
 
 class MyApp extends ConsumerWidget {

@@ -10,11 +10,17 @@ class McpPage extends StatefulWidget {
 final class _McpPageState extends State<McpPage>
     with AutomaticKeepAliveClientMixin {
   final _mcpStore = Stores.mcp;
+  // Local UI size constraints for this page
+  static const double _maxElementWidth = 50.0;
+  static const double _maxIconSize = 14.0;
+  static const double _secondaryIconSize = 13.0;
+  static const double _smallIconSize = 12.0;
+  static const double _maxTextSize = 10.0;
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return AutoMultiList(children: [_buildTools, _buildMcps,_presetMcpExample, _buildList]);
+    return AutoMultiList(children: [_buildTools]);
   }
 
   Widget get _buildTools {
@@ -23,47 +29,32 @@ final class _McpPageState extends State<McpPage>
         CenterGreyTitle(l10n.tool),
         _buildUseTool(),
         _buildModelRegExp(),
-      ],
-    );
-  }
- Widget get _presetMcpExample {
-    return Column(
-      children: [
-        CenterGreyTitle("MCP Presets"),
-       McpPresetsWidget(
-       ),
-      ],
-    );
-  }
-  Widget get _buildList {
-    return Column(
-      children: [
-        CenterGreyTitle(l10n.list),
-        _buildSwitchTile(TfHistory.instance),
-        _buildSwitchTile(TfHttpReq.instance),
-        _buildSwitchTile(TfTerminal.instance),
-        _buildMemory(),
-      ],
-    );
-  }
-
-  Widget get _buildMcps {
-    return Column(
-      children: [
-        CenterGreyTitle('MCP'),
+                CenterGreyTitle('MCP'),
         _buildAddMcpServer(),
         _buildMcpServers(),
+
+                CenterGreyTitle("MCP Presets"),
+       McpPresetsWidget(
+       ),
+               CenterGreyTitle(l10n.list),
+        _buildSwitchTile(TfHistory.instance),
+        _buildSwitchTile(TfHttpReq.instance),
+               CenterGreyTitle(""),
+
+
       ],
     );
   }
+ 
+
 
   Widget _buildMemory() {
     return ExpandTile(
-      title: Text(l10n.memory),
+      title: Text(l10n.memory, style: const TextStyle(fontSize: _maxTextSize)),
       children: [
         _buildSwitchTile(TfMemory.instance, title: l10n.switcher),
         ListTile(
-          title: Text(libL10n.edit),
+          title: Text(libL10n.edit, style: const TextStyle(fontSize: _maxTextSize)),
           onTap: () async {
             final data = _mcpStore.memories.get();
             final dataMap = <String, String>{};
@@ -79,7 +70,7 @@ final class _McpPageState extends State<McpPage>
               context.showSnackBar(libL10n.success);
             }
           },
-          trailing: const Icon(Icons.keyboard_arrow_right),
+          trailing: Icon(Icons.keyboard_arrow_right, size: _smallIconSize),
         ),
       ],
     ).cardx;
@@ -87,8 +78,8 @@ final class _McpPageState extends State<McpPage>
 
   Widget _buildUseTool() {
     return ListTile(
-      leading: const Icon(MingCute.tool_line),
-      title: Text(l10n.switcher),
+      leading: Icon(MingCute.tool_line, size: _maxIconSize),
+      title: Text(l10n.switcher, style: const TextStyle(fontSize: _maxTextSize)),
       trailing: StoreSwitch(prop: _mcpStore.enabled),
     ).cardx;
   }
@@ -97,14 +88,13 @@ final class _McpPageState extends State<McpPage>
     final prop = _mcpStore.mcpRegExp;
     final listenable = prop.listenable();
     return ListTile(
-      leading: const Icon(Bootstrap.regex),
-      title: TipText(l10n.regExp, l10n.modelRegExpTip),
+      leading: Icon(Bootstrap.regex, size: _maxIconSize),
       trailing: SizedBox(
-        width: 60,
+        width: _maxElementWidth,
         child: listenable.listenVal(
           (val) => Text(
             val,
-            style: UIs.textGrey,
+            style: UIs.textGrey.copyWith(fontSize: _maxTextSize),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
@@ -133,8 +123,8 @@ final class _McpPageState extends State<McpPage>
 
   Widget _buildMcpServers() {
     return _mcpStore.mcpServers.listenable().listenVal((servers) {
-      const maxRows = 7;
-      const rowHeight = 56.0;
+      const maxRows = 30;
+      const rowHeight = 40.0;
       final itemCount = servers.length;
       final visibleRows = itemCount < maxRows ? itemCount : maxRows;
       final height = visibleRows * rowHeight;
@@ -150,8 +140,8 @@ final class _McpPageState extends State<McpPage>
 
   Widget _buildAddMcpServer() {
     return ListTile(
-      leading: const Icon(Icons.add),
-      title: Text(libL10n.add),
+      leading: Icon(Icons.add, size: _maxIconSize),
+      title: Text(libL10n.add, style: const TextStyle(fontSize: _maxTextSize)),
       onTap: () => _onTapAddMcpServer(
         _mcpStore.mcpServers,
         _mcpStore.mcpServers.get(),
@@ -172,7 +162,7 @@ final class _McpPageState extends State<McpPage>
         color: Colors.red,
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: const Icon(Icons.delete, color: Colors.white),
+        child: Icon(Icons.delete, color: Colors.white, size: _maxIconSize),
       ),
       onDismissed: (_) async {
         await _onDeleteMcpServer(serverName, url);
@@ -183,13 +173,14 @@ final class _McpPageState extends State<McpPage>
         leading: Icon(
           isConnected ? Icons.cloud_done : Icons.cloud_off,
           color: isConnected ? Colors.green : Colors.red,
+          size: _maxIconSize,
         ),
-        title: Text(url, maxLines: 1, overflow: TextOverflow.ellipsis),
+        title: Text(url, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: _maxTextSize)),
         subtitle: Text(
           isConnected ? 'Connected • $toolCount tools' : 'Disconnected',
           style: TextStyle(
             color: isConnected ? Colors.green : Colors.red,
-            fontSize: 12,
+            fontSize: _maxTextSize,
           ),
         ),
         trailing: Row(
@@ -197,12 +188,12 @@ final class _McpPageState extends State<McpPage>
           children: [
             if (!isConnected)
               IconButton(
-                icon: const Icon(Icons.refresh),
+                icon: Icon(Icons.refresh, size: _secondaryIconSize),
                 onPressed: () => _onRetryMcpServer(serverName),
                 tooltip: 'Retry connection',
               ),
             IconButton(
-              icon: const Icon(Icons.delete_outline),
+              icon: Icon(Icons.delete_outline, size: _secondaryIconSize),
               onPressed: () async {
                 await _onDeleteMcpServer(serverName, url);
                 final newList = List<String>.from(servers)..removeAt(idx);
@@ -221,12 +212,8 @@ final class _McpPageState extends State<McpPage>
       listenable: prop.listenable(),
       builder: (vals) {
         final name = e.name;
-        final tip = e.l10nTip;
-        final titleW = tip != null
-            ? TipText(title ?? e.l10nName, tip)
-            : Text(title ?? e.l10nName);
         return ListTile(
-          title: titleW,
+          title: Text(title ?? e.l10nName, style: const TextStyle(fontSize: _maxTextSize)),
           trailing: Switch(
             value: !vals.contains(name),
             onChanged: (val) {
@@ -251,18 +238,18 @@ extension on _McpPageState {
     final ok = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(libL10n.add),
+        title: Text(libL10n.add, style: const TextStyle(fontSize: _McpPageState._maxTextSize)),
         content: Input(
           controller: ctrl,
           autoFocus: true,
           hint: 'https://your-mcp-server',
           onSubmitted: context.pop,
         ),
-        actions: [
-          TextButton(onPressed: context.pop, child: Text(libL10n.cancel)),
+          actions: [
+          TextButton(onPressed: context.pop, child: Text(libL10n.cancel, style: const TextStyle(fontSize: _McpPageState._maxTextSize))),
           TextButton(
             onPressed: () => context.pop(ctrl.text),
-            child: Text(libL10n.ok),
+            child: Text(libL10n.ok, style: const TextStyle(fontSize: _McpPageState._maxTextSize)),
           ),
         ],
       ),
@@ -295,35 +282,35 @@ Future<void> _onDeleteMcpServer(String serverName, String url) async {
     builder: (ctx) {
       final theme = Theme.of(ctx);
       return AlertDialog(
-        title: Text(libL10n.delete),
+        title: Text(libL10n.delete, style: TextStyle(fontSize: _McpPageState._maxTextSize)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(libL10n.askContinue('${libL10n.delete} $url')),
+            Text(libL10n.askContinue('${libL10n.delete} $url'), style: TextStyle(fontSize: _McpPageState._maxTextSize)),
             const SizedBox(height: 12),
-            Text(serverName, style: theme.textTheme.titleMedium),
+            Text(serverName, style: theme.textTheme.titleMedium?.copyWith(fontSize: _McpPageState._maxTextSize)),
             const SizedBox(height: 4),
-            Text(url, style: theme.textTheme.bodyMedium),
+            Text(url, style: theme.textTheme.bodyMedium?.copyWith(fontSize: _McpPageState._maxTextSize)),
             const SizedBox(height: 12),
             Text(
               // Fallback text if your l10n doesn't provide this key
               'This action cannot be undone.',
-              style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.error),
+              style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.error, fontSize: _McpPageState._maxTextSize),
             ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(MaterialLocalizations.of(ctx).cancelButtonLabel),
+            child: Text(MaterialLocalizations.of(ctx).cancelButtonLabel, style: TextStyle(fontSize: _McpPageState._maxTextSize)),
           ),
           TextButton(
             style: TextButton.styleFrom(
               foregroundColor: theme.colorScheme.error, // destructive color
             ),
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(libL10n.delete),
+            child: Text(libL10n.delete, style: TextStyle(fontSize: _McpPageState._maxTextSize)),
           ),
         ],
       );
@@ -346,7 +333,7 @@ Future<void> _onDeleteMcpServer(String serverName, String url) async {
     if (mounted) {
       Navigator.of(context, rootNavigator: true).pop();
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Server removed')),
+        SnackBar(content: Text('Server removed', style: TextStyle(fontSize: _McpPageState._maxTextSize))),
       );
     }
   } catch (e, s) {
@@ -357,7 +344,7 @@ Future<void> _onDeleteMcpServer(String serverName, String url) async {
     if (mounted) {
       Navigator.of(context, rootNavigator: true).pop();
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to remove server')),
+        SnackBar(content: Text('Failed to remove server', style: TextStyle(fontSize: _McpPageState._maxTextSize))),
       );
     }
   }
@@ -452,7 +439,7 @@ class McpPresetsWidget extends StatelessWidget {
   void _copyUrl(BuildContext context, String url) {
     Clipboard.setData(ClipboardData(text: url));
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('URL copied to clipboard')),
+      SnackBar(content: Text('URL copied to clipboard', style: TextStyle(fontSize: _McpPageState._maxTextSize))),
     );
   }
 
@@ -461,16 +448,16 @@ class McpPresetsWidget extends StatelessWidget {
       context: context,
       builder: (ctx) {
         return AlertDialog(
-          title: Text(s.name),
+          title: Text(s.name, style: Theme.of(ctx).textTheme.titleMedium?.copyWith(fontSize: _McpPageState._maxTextSize)),
           content: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SelectableText('URL: ${s.url}'),
+                SelectableText('URL: ${s.url}', style: TextStyle(fontSize: _McpPageState._maxTextSize)),
                 const SizedBox(height: 12),
-                Text('Description:', style: Theme.of(ctx).textTheme.titleSmall),
+                Text('Description:', style: Theme.of(ctx).textTheme.titleSmall?.copyWith(fontSize: _McpPageState._maxTextSize)),
                 const SizedBox(height: 6),
-                Text(s.description.isEmpty ? '—' : s.description),
+                Text(s.description.isEmpty ? '—' : s.description, style: TextStyle(fontSize: _McpPageState._maxTextSize)),
               ],
             ),
           ),
@@ -479,11 +466,11 @@ class McpPresetsWidget extends StatelessWidget {
               onPressed: () {
                 _copyUrl(context, s.url);
               },
-              child: const Text('COPY URL'),
+              child: Text('COPY URL', style: TextStyle(fontSize: _McpPageState._maxTextSize)),
             ),
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('CLOSE'),
+              child: Text('CLOSE', style: TextStyle(fontSize: _McpPageState._maxTextSize)),
             ),
           ],
         );
@@ -501,7 +488,7 @@ class McpPresetsWidget extends StatelessWidget {
           child: Row(
             children: [
               const SizedBox(width: 12),
-              Text(title, style: Theme.of(context).textTheme.titleMedium),
+              Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontSize: _McpPageState._maxTextSize)),
             ],
           ),
         ),
@@ -514,14 +501,14 @@ class McpPresetsWidget extends StatelessWidget {
             final s = presets[idx];
             return ListTile(
               leading: IconButton(
-                icon: const Icon(Icons.copy),
+                icon: Icon(Icons.copy, size: _McpPageState._smallIconSize),
                 tooltip: 'Copy URL',
                 onPressed: () => _copyUrl(context, s.url),
               ),
-              title: Text(s.name),
+              title: Text(s.name, style: const TextStyle(fontSize: _McpPageState._maxTextSize)),
               subtitle: Text(
                 s.url,
-                style: const TextStyle(color: Colors.grey),
+                style: const TextStyle(color: Colors.grey, fontSize: _McpPageState._maxTextSize),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -530,7 +517,7 @@ class McpPresetsWidget extends StatelessWidget {
                   const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               dense: false,
               // Optionally show a small trailing icon to hint for details
-              trailing: const Icon(Icons.keyboard_arrow_right),
+              trailing: Icon(Icons.keyboard_arrow_right, size: _McpPageState._smallIconSize),
             );
           },
         ),

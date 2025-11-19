@@ -144,10 +144,25 @@ class SetupService {
       await _ensureExecutablePermission(dartExecutable);
     }
 
+    // Set HOME and TMPDIR environment variables for Dart pub
+    // Create a temp directory within sandbox for Dart to use
+    final tmpDir = Directory(p.join(sandboxPath, 'tmp'));
+    if (!await tmpDir.exists()) {
+      await tmpDir.create(recursive: true);
+    }
+    
+    final environment = <String, String>{
+      'HOME': sandboxPath,
+      'TMPDIR': tmpDir.path,
+      'TEMP': tmpDir.path,
+      'TMP': tmpDir.path,
+    };
+    
     final result = await runProcess(
       dartExecutable,
       ['create', projectName],
       workingDirectory: sandboxPath,
+      environment: environment,
     );
 
     if (result.exitCode != 0) {
@@ -161,6 +176,7 @@ class SetupService {
     String executable,
     List<String> arguments, {
     String? workingDirectory,
+    Map<String, String>? environment,
   }) async {
     if (Platform.isAndroid) {
       final response = await _nativeProcessChannel.invokeMapMethod<String, dynamic>(
@@ -169,6 +185,7 @@ class SetupService {
           'executable': executable,
           'arguments': arguments,
           'workingDirectory': workingDirectory,
+          if (environment != null) 'environment': environment,
         },
       );
 
@@ -187,6 +204,7 @@ class SetupService {
       executable,
       arguments,
       workingDirectory: workingDirectory,
+      environment: environment,
     );
 
     return ProcessExecutionResult(
@@ -265,11 +283,11 @@ class SetupService {
   /// Check if the Android device is rooted
   Future<bool> _checkIfDeviceIsRooted() async {
     try {
-      final isRooted = await RootPlus.isRootAvailable();
+      final isRooted = await RootPlus.requestRootAccess();
       if (kDebugMode) {
         debugPrint('Root check result: $isRooted');
       }
-      return isRooted ?? false;
+      return isRooted;
     } catch (e) {
       if (kDebugMode) {
         debugPrint('Error checking root status: $e');
@@ -291,8 +309,8 @@ class SetupService {
       }
 
       // Execute chmod with root privileges
-      final result = await RootPlus.execute(command: 'chmod +x "$executablePath"');
-      if (result != null && result.isNotEmpty) {
+      final result = await RootPlus.executeRootCommand('chmod +x "$executablePath"');
+      if (result.isNotEmpty) {
         if (kDebugMode) {
           debugPrint('Root chmod result: $result');
         }

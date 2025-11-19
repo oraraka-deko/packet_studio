@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:io';
+// import 'dart:io'; // removed: not used in this file
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
@@ -19,12 +19,8 @@ import '../data/res/openai.dart';
 import '../data/res/url.dart';
 import '../data/store/all.dart';
 import '../generated/l10n/l10n.dart';
-import '../home/bottom/prompt_generator.dart';
-import '../home/home.dart';
-
 part 'mcp.dart';
 part 'profile.dart';
-part 'res.dart';
 part 'about.dart';
 part 'def.dart';
 
@@ -84,6 +80,12 @@ final class AppSettingsPage extends StatefulWidget {
 final class _AppSettingsPageState extends State<AppSettingsPage> {
   final _setStore = Stores.setting;
   final _autoDelTrashCtrl = TextEditingController();
+  // UI constraints for this page
+  static const double _maxElementWidth = 50.0;
+  static const double _maxIconSize = 15.0;
+  static const double _secondaryIconSize = 14.0;
+  static const double _smallIconSize = 13.0;
+  static const double _maxTextSize = 11.0;
 
   @override
   void dispose() {
@@ -102,7 +104,6 @@ final class _AppSettingsPageState extends State<AppSettingsPage> {
     return MultiList(
       children: [
         [const CenterGreyTitle('App'), _buildApp()],
-        [CenterGreyTitle(l10n.chat), _buildAppChat()]
       ],
     );
   }
@@ -112,98 +113,68 @@ final class _AppSettingsPageState extends State<AppSettingsPage> {
       _buildLocale(),
       // _buildColorSeed(),
       _buildThemeMode(),
-            _buildResponseTitle(),
+      _buildUserName(),
+        _buildGenTitle(),
+
+
 
       // _buildCheckUpdate(),
-      _buildAppMore(),
     ];
     return Column(children: children.map((e) => e.cardx).toList());
   }
 
-  Widget _buildAppChat() {
-    final children = [
-      _buildUserName(),
-      if (isMobile) _buildScrollSwitchChat(),
-      // _buildFontSize(),
-      _buildGenTitle(),
-      _buildAutoScrollBottom(),
-      _buildSoftWrap(),
-      //_buildCalcTokenLen(),
-      // _buildReplay(),
-      _buildMoreMore(),
-    ];
-    return Column(children: children.map((e) => e.cardx).toList());
-  }
+
 
   Widget _buildThemeMode() {
     return ValueListenableBuilder(
       valueListenable: _setStore.themeMode.listenable(),
       builder: (_, val, _) => ListTile(
-        leading: const Icon(Icons.sunny),
-        title: Text(l10n.themeMode),
+        leading: Icon(Icons.sunny, size: _secondaryIconSize),
+        title: Text(l10n.themeMode, style: TextStyle(fontSize: _maxTextSize)),
         onTap: () async {
           final result = await context.showPickSingleDialog(
             title: l10n.themeMode,
             items: ThemeMode.values,
             display: (e) => e.i18n,
-            initial: ThemeMode.values[val],
+            initial: ThemeMode.dark,
           );
           if (result != null) {
-            _setStore.themeMode.set(result.index);
+            _setStore.themeMode.set(1);
             context.pop();
 
             /// Set delay to true to wait for db update.
             RNodes.app.notify(delay: true);
           }
         },
-        trailing: Text(
-          ThemeMode.values[val].name,
-          style: UIs.text13Grey,
+        trailing: SizedBox(
+          width: _maxElementWidth,
+          child: Text(
+            ThemeMode.values[val].name,
+            style: UIs.text13Grey.copyWith(fontSize: _maxTextSize),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
       ),
     );
   }
 
-  // Widget _buildColorSeed() {
-  //   return ValueListenableBuilder(
-  //     valueListenable: _setStore.themeColorSeed.listenable(),
-  //     builder: (_, val, _) {
-  //       final primaryColor = Color(val);
-  //       return ListTile(
-  //         leading: const Icon(Icons.colorize),
-  //         title: Text(l10n.themeColorSeed),
-  //         trailing: ClipOval(
-  //           child: Container(color: primaryColor, height: 27, width: 27),
-  //         ),
-  //         onTap: () async {
-  //           var color = primaryColor;
-  //           await context.showRoundDialog(
-  //             title: libL10n.select,
-  //             child: ColorPicker(
-  //               color: primaryColor,
-  //               onColorChanged: (c) => color = c,
-  //             ),
-  //             actions: Btn.ok(onTap: () {
-  //               _onSaveColor(color);
-  //               context.pop();
-  //             }).toList,
-  //           );
-  //         },
-  //       );
-  //     },
-  //   );
-  // }
 
 
   Widget _buildLocale() {
     return ValueListenableBuilder(
       valueListenable: _setStore.locale.listenable(),
       builder: (_, val, _) => ListTile(
-        leading: const Icon(MingCute.translate_2_line),
-        title: Text(libL10n.language),
-        trailing: Text(
-          val.isEmpty ? context.localeNativeName : val,
-          style: UIs.text13Grey,
+        leading: Icon(MingCute.translate_2_line, size: _secondaryIconSize),
+        title: Text(libL10n.language, style: TextStyle(fontSize: _maxTextSize)),
+        trailing: SizedBox(
+          width: _maxElementWidth,
+          child: Text(
+            val.isEmpty ? context.localeNativeName : val,
+            style: UIs.text13Grey.copyWith(fontSize: _maxTextSize),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
         onTap: () async {
           final result = await context.showPickSingleDialog<Locale>(
@@ -250,52 +221,14 @@ final class _AppSettingsPageState extends State<AppSettingsPage> {
 
   Widget _buildGenTitle() {
     return ListTile(
-      leading: const Icon(Icons.auto_awesome, size: 21),
-      title: Text(l10n.genChatTitle),
+      leading: Icon(Icons.auto_awesome, size: _secondaryIconSize),
+      title: Text(l10n.genChatTitle, style: TextStyle(fontSize: _maxTextSize)),
       trailing: StoreSwitch(prop: _setStore.genTitle),
     );
   }
 
-  Widget _buildResponseTitle() {
-    return ListTile(
-      leading: const Icon(Icons.auto_awesome, size: 21),
-      title: Text("Using Response API?"),
-      trailing: StoreSwitch(prop: _setStore.response),
-    );
-  }
-  Widget _buildAutoScrollBottom() {
-    return ExpandTile(
-      leading: const Icon(Icons.keyboard_arrow_down),
-      title: Text(l10n.autoScrollBottom),
-      children: [
-        _buildScrollBottomOnMsg(),
-        _buildScrollAfterSwitch(),
-      ],
-    );
-  }
 
-  Widget _buildScrollBottomOnMsg() {
-    return ListTile(
-      title: Text(l10n.onMsgCome),
-      trailing: StoreSwitch(prop: _setStore.scrollBottom),
-    );
-  }
 
-  Widget _buildSoftWrap() {
-    return ListTile(
-      leading: const Icon(Icons.wrap_text),
-      title: TipText(l10n.softWrap, l10n.codeBlock),
-      trailing: StoreSwitch(prop: _setStore.softWrap),
-    );
-  }
-
-  Widget _buildAutoRmDupChat() {
-    return ListTile(
-      leading: const Icon(Icons.delete),
-      title: Text(l10n.autoRmDupChat),
-      trailing: StoreSwitch(prop: _setStore.autoRmDupChat),
-    );
-  }
 
   // Widget _buildCalcTokenLen() {
   //   return ListTile(
@@ -306,79 +239,16 @@ final class _AppSettingsPageState extends State<AppSettingsPage> {
   // }
 
 
-  Widget _buildAppMore() {
-    return ExpandTile(
-      leading: const Icon(MingCute.more_3_fill),
-      title: Text(l10n.more),
-      children: [
-        _buildJoinBeta(),
-        if (isDesktop) _buildHideTitleBar(),
-      ],
-    );
-  }
 
-  Widget _buildDeleteConfrim() {
-    return ListTile(
-      leading: const Icon(MingCute.check_circle_fill),
-      title: Text(l10n.deleteConfirm),
-      trailing: StoreSwitch(prop: _setStore.confrimDel),
-    );
-  }
-
-  Widget _buildJoinBeta() {
-    return ListTile(
-      leading: const Icon(Clarity.beta_solid),
-      title: Text(l10n.joinBeta),
-      trailing: StoreSwitch(
-        prop: _setStore.joinBeta,
-        callback: (val) async {
-          if (val) {
-            AppUpdate.chan = AppUpdateChan.beta;
-          } else {
-            AppUpdate.chan = AppUpdateChan.stable;
-          }
-          await AppUpdateIface.doUpdate(
-            context: context,
-            url: Urls.appUpdateCfg,
-            build: BuildData.build,
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildCompressImg() {
-    return ListTile(
-      leading: const Icon(Icons.compress),
-      title: TipText(l10n.compress, l10n.compressImgTip),
-      trailing: StoreSwitch(prop: _setStore.compressImg),
-    );
-  }
-
-  Widget _buildSaveErrChat() {
-    return ListTile(
-      leading: const Icon(Icons.save),
-      title: TipText(l10n.saveErrChat, l10n.saveErrChatTip),
-      trailing: StoreSwitch(prop: _setStore.saveErrChat),
-    );
-  }
-
-  Widget _buildScrollSwitchChat() {
-    return ListTile(
-      leading: const Icon(Icons.swap_vert),
-      title: TipText(l10n.scrollSwitchChat, l10n.needRestart),
-      trailing: StoreSwitch(prop: _setStore.scrollSwitchChat),
-    );
-  }
 
   Widget _buildUserName() {
     final property = _setStore.avatar;
     return ListTile(
-      leading: const Icon(Bootstrap.person_vcard_fill, size: 22),
-      title: Text(libL10n.name),
+      leading: Icon(Bootstrap.person_vcard_fill, size: _maxIconSize),
+      title: Text(libL10n.name, style: TextStyle(fontSize: _maxTextSize)),
       trailing: ValBuilder(
         listenable: _setStore.avatar.listenable(),
-        builder: (val) => Text(val, style: const TextStyle(fontSize: 18)),
+        builder: (val) => Text(val, style: const TextStyle(fontSize: 10)),
       ),
       onTap: () async {
         final ctrl = TextEditingController(text: property.get());
@@ -402,65 +272,7 @@ final class _AppSettingsPageState extends State<AppSettingsPage> {
     );
   }
 
-  Widget _buildMoreMore() {
-    return ExpandTile(
-      leading: const Icon(MingCute.more_3_fill),
-      title: Text(l10n.more),
-      children: [
-        _buildSaveErrChat(),
-        _buildAutoRmDupChat(),
-        _buildDeleteConfrim(),
-        _buildCompressImg(),
-        _buildAutoDeleteTrash,
-      ],
-    );
-  }
 
-  Widget _buildHideTitleBar() {
-    return ListTile(
-      leading: const Icon(Bootstrap.window_sidebar, size: 20),
-      title: Text(libL10n.hideTitleBar),
-      trailing: StoreSwitch(prop: _setStore.hideTitleBar),
-    );
-  }
 
-  Widget _buildScrollAfterSwitch() {
-    return ListTile(
-      title: Text(l10n.onSwitchChat),
-      trailing: StoreSwitch(prop: _setStore.scrollAfterSwitch),
-    );
-  }
 
-  Widget get _buildAutoDeleteTrash {
-    void onSave(String s) {
-      final days = int.tryParse(s);
-      if (days == null) {
-        context.showSnackBar(libL10n.fail);
-        return;
-      }
-      _setStore.trashDays.put(days);
-      context.pop();
-    }
-
-    return ListTile(
-      leading: const Icon(Icons.delete),
-      title: TipText(
-          l10n.emptyTrash, '${l10n.emptyTrashTip}\n${l10n.needRestart}'),
-      onTap: () {
-        context.showRoundDialog(
-          title: l10n.emptyTrash,
-          child: Input(
-            controller: _autoDelTrashCtrl,
-            type: TextInputType.number,
-            autoFocus: true,
-            onSubmitted: onSave,
-          ),
-          actions: Btn.ok(onTap: () => onSave(_autoDelTrashCtrl.text)).toList,
-        );
-      },
-      trailing: _setStore.trashDays
-          .listenable()
-          .listenVal((days) => Text('$days ${libL10n.day}')),
-    );
-  }
 }

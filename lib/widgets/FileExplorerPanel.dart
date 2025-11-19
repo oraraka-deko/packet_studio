@@ -32,6 +32,8 @@ class _FileExplorerPanelState extends ConsumerState<FileExplorerPanel> {
 
   Widget _buildFileItem(FileModel file) {
     final isSelected = ref.watch(workspaceProvider).selectedFile?.path == file.path;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 900;
     
     return InkWell(
       onTap: () {
@@ -39,14 +41,31 @@ class _FileExplorerPanelState extends ConsumerState<FileExplorerPanel> {
       },
       child: Container(
         color: isSelected ? Colors.blue.withOpacity(0.2) : null,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: EdgeInsets.symmetric(
+          horizontal: isSmallScreen ? 8 : 16, 
+          vertical: isSmallScreen ? 4 : 8,
+        ),
         child: Row(
           children: [
-            Icon(_getFileIcon(file.fileExtentsion), color: _getFileColor(file.fileExtentsion), size: 18),
-            const SizedBox(width: 8),
-            Expanded(child: Text(file.name, style: TextStyle(color: Colors.grey[300]))),
+            Icon(
+              _getFileIcon(file.fileExtentsion), 
+              color: _getFileColor(file.fileExtentsion), 
+              size: isSmallScreen ? 16 : 18,
+            ),
+            SizedBox(width: isSmallScreen ? 4 : 8),
+            Expanded(
+              child: Text(
+                file.name, 
+                style: TextStyle(
+                  color: Colors.grey[300],
+                  fontSize: isSmallScreen ? 12 : 14,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
             PopupMenuButton<String>(
-              icon: Icon(Icons.more_vert, size: 16, color: Colors.grey[600]),
+              icon: Icon(Icons.more_vert, size: isSmallScreen ? 14 : 16, color: Colors.grey[600]),
+              padding: EdgeInsets.zero,
               onSelected: (value) async {
                 if (value == 'delete') {
                   await ref.read(workspaceProvider.notifier).deleteFile(file.path);
@@ -64,6 +83,8 @@ class _FileExplorerPanelState extends ConsumerState<FileExplorerPanel> {
 
   Widget _buildFolderItem(String folderPath, String folderName, {int indent = 0}) {
     final isExpanded = expandedFolders[folderPath] ?? false;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 900;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -75,20 +96,35 @@ class _FileExplorerPanelState extends ConsumerState<FileExplorerPanel> {
             });
           },
           child: Padding(
-            padding: EdgeInsets.only(left: 16.0 + (indent * 16), top: 8, bottom: 8, right: 16),
+            padding: EdgeInsets.only(
+              left: (isSmallScreen ? 8.0 : 16.0) + (indent * (isSmallScreen ? 12 : 16)), 
+              top: isSmallScreen ? 4 : 8, 
+              bottom: isSmallScreen ? 4 : 8, 
+              right: isSmallScreen ? 8 : 16,
+            ),
             child: Row(
               children: [
                 Icon(
                   isExpanded ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_right,
                   color: Colors.grey[600],
-                  size: 18,
+                  size: isSmallScreen ? 16 : 18,
                 ),
-                const SizedBox(width: 4),
-                Icon(Icons.folder, color: Colors.blue, size: 18),
-                const SizedBox(width: 8),
-                Expanded(child: Text(folderName, style: TextStyle(color: Colors.grey[300]))),
+                SizedBox(width: isSmallScreen ? 2 : 4),
+                Icon(Icons.folder, color: Colors.blue, size: isSmallScreen ? 16 : 18),
+                SizedBox(width: isSmallScreen ? 4 : 8),
+                Expanded(
+                  child: Text(
+                    folderName, 
+                    style: TextStyle(
+                      color: Colors.grey[300],
+                      fontSize: isSmallScreen ? 12 : 14,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
                 PopupMenuButton<String>(
-                  icon: Icon(Icons.more_vert, size: 16, color: Colors.grey[600]),
+                  icon: Icon(Icons.more_vert, size: isSmallScreen ? 14 : 16, color: Colors.grey[600]),
+                  padding: EdgeInsets.zero,
                   onSelected: (value) async {
                     if (value == 'new_file') {
                       _showCreateFileDialog(folderPath);
@@ -256,6 +292,8 @@ class _FileExplorerPanelState extends ConsumerState<FileExplorerPanel> {
   Widget build(BuildContext context) {
     final workspaceState = ref.watch(workspaceProvider);
     final rootFolder = workspaceState.rootFolder;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 900;
 
     return Container(
       color: const Color(0xFF131314),
@@ -264,7 +302,7 @@ class _FileExplorerPanelState extends ConsumerState<FileExplorerPanel> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 8.0 : 16.0),
             child: Row(
               children: [
                 Expanded(
@@ -273,12 +311,15 @@ class _FileExplorerPanelState extends ConsumerState<FileExplorerPanel> {
                     style: TextStyle(
                       color: Colors.grey[500],
                       fontWeight: FontWeight.bold,
-                      fontSize: 12,
+                      fontSize: isSmallScreen ? 10 : 12,
                     ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 IconButton(
-                  icon: Icon(Icons.add, size: 16, color: Colors.grey[600]),
+                  icon: Icon(Icons.add, size: isSmallScreen ? 14 : 16, color: Colors.grey[600]),
+                  padding: EdgeInsets.all(isSmallScreen ? 4 : 8),
+                  constraints: const BoxConstraints(),
                   onPressed: () {
                     if (rootFolder != null) {
                       _showCreateFileDialog(rootFolder.path);

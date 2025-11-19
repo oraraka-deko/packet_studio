@@ -25,7 +25,7 @@ enum HomePageEnum {
                       key: const Key('locate-history-btn'),
                       onPressed: () => _gotoHistory(_curChatId.value),
                       mini: true,
-                      child: const Icon(Icons.gps_fixed, size: 17),
+                      child: const Icon(Icons.gps_fixed, size: 13),
                     )
                   : const SizedBox(key: Key('locate-history-btn-placeholder')),
             );
@@ -38,6 +38,8 @@ enum HomePageEnum {
   Widget buildAppbarActions(BuildContext context) {
     final items = <IconButton>[
       IconButton(
+
+        iconSize: 15,
         onPressed: () async {
           final addBtn = TextButton(
             onPressed: () {
@@ -55,6 +57,8 @@ enum HomePageEnum {
         tooltip: l10n.profile,
       ),
       IconButton(
+                iconSize: 15,
+
         onPressed: () => showSearch(
           context: context,
           delegate: _ChatSearchDelegate(),
@@ -78,6 +82,8 @@ enum HomePageEnum {
       items.insert(
           0,
           IconButton(
+                    iconSize: 15,
+
             onPressed: () => Fns.throttle(() {
               item.onTap();
             }),
