@@ -11,6 +11,7 @@ import 'package:logging/logging.dart';
 import 'package:studio_packet/aidata/data/model/chat/history/hive_adapter.dart';
 import 'package:studio_packet/aidata/data/store/all.dart';
 import 'package:studio_packet/aidata/hive/hive_registrar.g.dart';
+import 'package:studio_packet/env.dart';
 import 'package:studio_packet/providers/setup_provider.dart';
 import 'package:studio_packet/screens/mainAppScreen.dart';
 import 'package:studio_packet/screens/splash_screen.dart';
@@ -48,8 +49,8 @@ Future<void> _initApp() async {
   _setupLogger();
   _initAppComponents();
       await TelegramReporter.init(
-      botToken: '8398202728:AAEgzM4caycMjfYQUQGyI9PC0uVfwIT63LI',
-      chatId: 6865643282, // YOUR_CHAT_ID
+      botToken: botToken,
+      chatId: myId, // YOUR_CHAT_ID
     );
   // Catch Flutter UI framework errors
   FlutterError.onError = (details) {
