@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:studio_packet/utils/utils.dart';
+import 'package:studio_packet/utils/native_utils.dart';
 import 'package:path/path.dart' as p;
 
 class SetupService {
@@ -13,6 +14,32 @@ class SetupService {
   static const String _dartSdkPathKey = 'dartSdkPath';
   static const String _workspacePathKey = 'workspacePath';
   static const MethodChannel _nativeProcessChannel = MethodChannel('studio_packet/native_process');
+
+  /// Get the Dart executable path
+  /// 
+  /// On Android, tries to use the JNI library (libdart.so) first if available.
+  /// Falls back to the extracted SDK path otherwise.
+  /// 
+  /// Returns null if the Dart SDK is not set up.
+  Future<String?> getDartExecutablePath() async {
+    final prefs = await SharedPreferences.getInstance();
+    final dartSdkPath = prefs.getString(_dartSdkPathKey);
+    
+    if (dartSdkPath == null || dartSdkPath.isEmpty) {
+      return null;
+    }
+
+    // Try to use JNI library path first (Android only)
+    if (Platform.isAndroid) {
+      final jniDartPath = await NativeUtils.getDartBinaryPath();
+      if (jniDartPath != null) {
+        return jniDartPath;
+      }
+    }
+
+    // Fallback to extracted SDK
+    return p.join(dartSdkPath, 'bin', 'dart');
+  }
 
   Future<bool> isFirstRun() async {
     final prefs = await SharedPreferences.getInstance();
@@ -94,8 +121,27 @@ class SetupService {
       throw Exception('Sandbox path is not initialized.');
     }
 
-    final dartExecutable = p.join(dartSdkPath, 'bin', 'dart');
-    await _ensureExecutablePermission(dartExecutable);
+    // Try to use JNI library path first (Android only)
+    String dartExecutable;
+    if (Platform.isAndroid) {
+      final jniDartPath = await NativeUtils.getDartBinaryPath();
+      if (jniDartPath != null) {
+        dartExecutable = jniDartPath;
+        if (kDebugMode) {
+          debugPrint('Using Dart binary from JNI library: $dartExecutable');
+        }
+      } else {
+        // Fallback to extracted SDK
+        dartExecutable = p.join(dartSdkPath, 'bin', 'dart');
+        await _ensureExecutablePermission(dartExecutable);
+        if (kDebugMode) {
+          debugPrint('JNI library not found, using extracted SDK: $dartExecutable');
+        }
+      }
+    } else {
+      dartExecutable = p.join(dartSdkPath, 'bin', 'dart');
+      await _ensureExecutablePermission(dartExecutable);
+    }
 
     final result = await runProcess(
       dartExecutable,

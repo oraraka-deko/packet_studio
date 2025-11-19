@@ -19,6 +19,7 @@ class MainActivity : FlutterActivity() {
 			.setMethodCallHandler { call, result ->
 				when (call.method) {
 					"runProcess" -> handleRunProcess(call, result)
+					"lib_path" -> handleLibPath(result)
 					else -> result.notImplemented()
 				}
 			}
@@ -43,6 +44,15 @@ class MainActivity : FlutterActivity() {
 					result.error("PROCESS_FAILED", e.localizedMessage ?: "Unknown error", null)
 				}
 			}
+		}
+	}
+
+	private fun handleLibPath(result: MethodChannel.Result) {
+		try {
+			val libDir = applicationContext.applicationInfo.nativeLibraryDir
+			result.success(libDir)
+		} catch (e: Exception) {
+			result.error("LIB_PATH_FAILED", e.localizedMessage ?: "Unable to get native library directory", null)
 		}
 	}
 
