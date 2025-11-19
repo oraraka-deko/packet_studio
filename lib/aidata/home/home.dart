@@ -29,6 +29,7 @@ import '../../utils/chat_title.dart';
 import '../../utils/file_type.dart';
 import '../../utils/tool_func/tool.dart';
 import '../../utils/url.dart';
+import '../../utils/telegram_reporter.dart';
 import '../data/model/canvas_result.dart';
 import '../data/model/chat/config.dart';
 import '../data/model/chat/folder.dart';

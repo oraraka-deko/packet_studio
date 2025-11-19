@@ -351,6 +351,7 @@ Future<void> _onDeleteMcpServer(String serverName, String url) async {
     }
   } catch (e, s) {
     Loggers.app.warning('Disconnect MCP server failed', e, s);
+    TelegramReporter.reportError(e, s, null, 'Disconnect MCP server failed', false);
 
     // Dismiss progress dialog
     if (mounted) {
@@ -368,6 +369,7 @@ Future<void> _onDeleteMcpServer(String serverName, String url) async {
       context.showSnackBar('Retrying connection...');
     } catch (e, s) {
       Loggers.app.warning('Retry MCP server failed', e, s);
+      TelegramReporter.reportError(e, s, null, 'Retry MCP server failed', false);
       context.showSnackBar('Retry failed: $e');
     }
   }

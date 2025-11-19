@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:studio_packet/utils/telegram_reporter.dart';
 
 /// Represents basic pricing information for a model.
 class PriceInfo {
@@ -144,62 +145,62 @@ void main() {
   // Parse the model pricing data from the JSON string
   List<ModelPricingInfo> parsedModels = parseModelPricing(_modelPricingJsonData);
 
-  print('--- Imported Model Pricing Information ---');
-  print('Total models imported: ${parsedModels.length}\n');
+  TelegramReporter.sendLog('--- Imported Model Pricing Information ---');
+  TelegramReporter.sendLog('Total models imported: ${parsedModels.length}\n');
 
 
   // Example 1: Accessing specific models and their detailed pricing
   final gpt4oMini = parsedModels.firstWhere((m) => m.id == 'gpt-4o-mini');
-  print('Model: ${gpt4oMini.id} (Owned by: ${gpt4oMini.ownedBy})');
-  print('  Input Price: ${gpt4oMini.inputPrice ?? 'N/A'}');
-  print('  Output Price: ${gpt4oMini.outputPrice ?? 'N/A'}');
-  print('  Cached Input Price: ${gpt4oMini.cachedInputPrice ?? 'N/A'}');
-  print('  Search Context Pricing (Low): ${gpt4oMini.searchContextCostPerQuery?['search_context_size_low'] ?? 'N/A'}\n');
+  TelegramReporter.sendLog('Model: ${gpt4oMini.id} (Owned by: ${gpt4oMini.ownedBy})');
+  TelegramReporter.sendLog('  Input Price: ${gpt4oMini.inputPrice ?? 'N/A'}');
+  TelegramReporter.sendLog('  Output Price: ${gpt4oMini.outputPrice ?? 'N/A'}');
+  TelegramReporter.sendLog('  Cached Input Price: ${gpt4oMini.cachedInputPrice ?? 'N/A'}');
+  TelegramReporter.sendLog('  Search Context Pricing (Low): ${gpt4oMini.searchContextCostPerQuery?['search_context_size_low'] ?? 'N/A'}\n');
 
 
   final claudeOpus = parsedModels.firstWhere((m) => m.id == 'anthropic.claude-3-opus-20240229-v1:0');
-  print('Model: ${claudeOpus.id} (Owned by: ${claudeOpus.ownedBy})');
-  print('  Input Price: ${claudeOpus.inputPrice ?? 'N/A'}');
-  print('  Output Price: ${claudeOpus.outputPrice ?? 'N/A'}');
-  print('  Cached Input Price: ${claudeOpus.cachedInputPrice ?? 'N/A'}\n');
+  TelegramReporter.sendLog('Model: ${claudeOpus.id} (Owned by: ${claudeOpus.ownedBy})');
+  TelegramReporter.sendLog('  Input Price: ${claudeOpus.inputPrice ?? 'N/A'}');
+  TelegramReporter.sendLog('  Output Price: ${claudeOpus.outputPrice ?? 'N/A'}');
+  TelegramReporter.sendLog('  Cached Input Price: ${claudeOpus.cachedInputPrice ?? 'N/A'}\n');
 
   final whisper1 = parsedModels.firstWhere((m) => m.id == 'whisper-1');
-  print('Model: ${whisper1.id} (Owned by: ${whisper1.ownedBy})');
-  print('  Input Cost Per Second: ${whisper1.inputCostPerSecond ?? 'N/A'}\n');
+  TelegramReporter.sendLog('Model: ${whisper1.id} (Owned by: ${whisper1.ownedBy})');
+  TelegramReporter.sendLog('  Input Cost Per Second: ${whisper1.inputCostPerSecond ?? 'N/A'}\n');
 
   final cohereRerank = parsedModels.firstWhere((m) => m.id == 'cohere.rerank-v3-5:0');
-  print('Model: ${cohereRerank.id} (Owned by: ${cohereRerank.ownedBy})');
-  print('  Input Cost Per Query: ${cohereRerank.inputCostPerQuery ?? 'N/A'}\n');
+  TelegramReporter.sendLog('Model: ${cohereRerank.id} (Owned by: ${cohereRerank.ownedBy})');
+  TelegramReporter.sendLog('  Input Cost Per Query: ${cohereRerank.inputCostPerQuery ?? 'N/A'}\n');
 
 
   // Example 2: Loop through a few models to show a general overview
-  print('--- Sample of All Models and Their Prices ---');
+  TelegramReporter.sendLog('--- Sample of All Models and Their Prices ---');
   for (int i = 0; i < (parsedModels.length > 5 ? 5 : parsedModels.length); i++) {
     final model = parsedModels[i];
-    print('  ID: ${model.id}');
-    print('    Owned By: ${model.ownedBy}');
-    print('    Input: ${model.inputPrice ?? 'N/A'}');
-    print('    Output: ${model.outputPrice ?? 'N/A'}');
-    print('    Cached Input: ${model.cachedInputPrice ?? 'N/A'}');
+    TelegramReporter.sendLog('  ID: ${model.id}');
+    TelegramReporter.sendLog('    Owned By: ${model.ownedBy}');
+    TelegramReporter.sendLog('    Input: ${model.inputPrice ?? 'N/A'}');
+    TelegramReporter.sendLog('    Output: ${model.outputPrice ?? 'N/A'}');
+    TelegramReporter.sendLog('    Cached Input: ${model.cachedInputPrice ?? 'N/A'}');
     if (model.inputCostPerSecond != null) {
-      print('    Input Cost/Sec: ${model.inputCostPerSecond}');
+        TelegramReporter.sendLog('    Input Cost/Sec: ${model.inputCostPerSecond}');
     }
     if (model.inputCostPerQuery != null) {
-      print('    Input Cost/Query: ${model.inputCostPerQuery}');
+      TelegramReporter.sendLog('    Input Cost/Query: ${model.inputCostPerQuery}');
     }
     if (model.searchContextCostPerQuery != null) {
-      print('    Search Context Costs: ${model.searchContextCostPerQuery}');
+      TelegramReporter.sendLog('    Search Context Costs: ${model.searchContextCostPerQuery}');
     }
-    print('');
+    TelegramReporter.sendLog('');
   }
 
   // Demonstration of existing PriceInfo functions (still functional for predefined models)
-  print('--- Existing PriceInfo Lookup ---');
+  TelegramReporter.sendLog('--- Existing PriceInfo Lookup ---');
   final gpt4Prices = getPrices('gpt-4');
   if (gpt4Prices != null) {
-    print('Traditional gpt-4 pricing:');
-    print('  Input: ${gpt4Prices.input}');
-    print('  Output: ${gpt4Prices.output}');
-    print('  Cached Input: ${gpt4Prices.inputCache}');
+    TelegramReporter.sendLog('Traditional gpt-4 pricing:');
+    TelegramReporter.sendLog('  Input: ${gpt4Prices.input}');
+    TelegramReporter.sendLog('  Output: ${gpt4Prices.output}');
+    TelegramReporter.sendLog('  Cached Input: ${gpt4Prices.inputCache}');
   }
 }

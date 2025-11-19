@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:studio_packet/utils/telegram_reporter.dart';
 import 'package:studio_packet/services/workspace_service.dart';
 
 import '../models/editor_tab.dart';
@@ -67,9 +68,9 @@ class EditorNotifier extends StateNotifier<EditorState> {
           openTabs: updatedTabs,
           activeTabIndex: updatedTabs.length - 1,
         );
-      } catch (e) {
+      } catch (e, s) {
         // TODO: Show an error dialog
-        print("Error opening file $filePath: $e");
+        TelegramReporter.reportError(e, s, null, 'Error opening file $filePath', false);
       }
     }
   }
@@ -83,7 +84,7 @@ class EditorNotifier extends StateNotifier<EditorState> {
     if (tab.isDirty) {
       // TODO: Show a "Save changes?" dialog.
       // For this example, we'll just discard changes.
-      print("Closing tab with unsaved changes. (Discarding for now)");
+      TelegramReporter.sendLog("Closing tab with unsaved changes. (Discarding for now)");
     }
 
     // Clean up resources
@@ -120,9 +121,9 @@ class EditorNotifier extends StateNotifier<EditorState> {
       
       // Trigger a rebuild to update the tab UI (e.g., remove '*')
       state = state.copyWith(openTabs: List<EditorTab>.from(state.openTabs));
-    } catch (e) {
+    } catch (e, s) {
       // TODO: Show error dialog
-      print("Error saving file ${activeTab.filePath}: $e");
+      TelegramReporter.reportError(e, s, null, 'Error saving file ${activeTab.filePath}', false);
     }
   }
 

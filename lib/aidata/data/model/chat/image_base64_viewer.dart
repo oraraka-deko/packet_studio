@@ -10,6 +10,7 @@ import 'dart:io';
 import 'package:file_selector/file_selector.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:studio_packet/utils/telegram_reporter.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 // ignore: must_be_immutable
@@ -60,9 +61,9 @@ class Base64ImageDisplay extends StatelessWidget {
     try {
       // Decode the Base64 string into a Uint8List (bytes)
       imageBytes = base64Decode(base64String);
-    } catch (e) {
+    } catch (e, s) {
       // Handle cases where the base64String is not a valid Base64 format
-      print("Error decoding Base64 string: $e");
+      TelegramReporter.reportError(e, s, null, 'Error decoding Base64 string', false);
       return errorWidget ??
           _buildDefaultErrorWidget(
             width,
@@ -118,7 +119,7 @@ class Base64ImageDisplay extends StatelessWidget {
         height: height,
         // errorBuilder catches issues AFTER decoding, like malformed image data within valid bytes
         errorBuilder: (context, error, stackTrace) {
-          print("Error loading image from bytes: $error");
+          TelegramReporter.reportError(error, stackTrace, null, 'Error loading image from bytes', false);
           return errorWidget ??
               _buildDefaultErrorWidget(
                 width,
@@ -220,9 +221,9 @@ class FullScreenImageViewer extends StatelessWidget {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Image saved successfully to: $path')),
       );
-    } catch (e) {
+    } catch (e, s) {
       // Handle any errors during file saving
-      print('Error saving image: $e');
+      TelegramReporter.reportError(e, s, null, 'Error saving image', false);
       if (!context.mounted) return;
       ScaffoldMessenger.of(
         context,
@@ -294,7 +295,7 @@ class FullScreenImageViewer extends StatelessWidget {
             imageBytes,
             fit: BoxFit.contain, // Ensure the entire image is visible initially
             errorBuilder: (context, error, stackTrace) {
-              print("Error loading full-screen image from bytes: $error");
+              TelegramReporter.reportError(error, stackTrace, null, 'Error loading full-screen image', false);
               return const Center(
                 child: Text(
                   "Failed to load full-screen image",

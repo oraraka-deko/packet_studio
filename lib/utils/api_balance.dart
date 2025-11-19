@@ -1,6 +1,7 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:dio/dio.dart';
 import 'package:studio_packet/aidata/data/res/openai.dart';
+import 'package:studio_packet/utils/telegram_reporter.dart';
 
 abstract final class ApiBalance {
   static const _balance = ApiBalanceState(loading: true);
@@ -15,6 +16,7 @@ abstract final class ApiBalance {
     } catch (e, s) {
       balance.value = const ApiBalanceState(loading: false);
       Loggers.app.warning('Refresh balance', e, s);
+      TelegramReporter.reportError(e, s, null, 'Refresh balance failed', false);
     }
   }
 }

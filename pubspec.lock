@@ -443,7 +443,7 @@ packages:
     source: hosted
     version: "2.1.1"
   equatable:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: equatable
       sha256: "567c64b3cb4cf82397aac55f4f0cbd3ca20d77c6c03bedbc4ceaddc08904aef7"
@@ -800,7 +800,7 @@ packages:
     source: hosted
     version: "2.2.3"
   hive_ce:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: hive_ce
       sha256: "81d39a03c4c0ba5938260a8c3547d2e71af59defecea21793d57fc3551f0d230"
@@ -1726,6 +1726,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.4.0"
+  telegram_crash_reporter:
+    dependency: "direct main"
+    description:
+      name: telegram_crash_reporter
+      sha256: "5b8622b058c23a8658843e323662d1079f3f5ff2376485c3eb88f92ce463b309"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.0"
   term_glyph:
     dependency: transitive
     description:

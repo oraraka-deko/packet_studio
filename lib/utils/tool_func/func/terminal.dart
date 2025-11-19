@@ -59,8 +59,9 @@ final class TfTerminal extends ToolFunc {
       }
 
       return [ChatContent.text(output.isEmpty ? 'Command completed with no output.' : output.toString())];
-    } catch (e) {
+    } catch (e, s) {
       log('Terminal Error: $e');
+      TelegramReporter.reportError(e, s, null, 'Terminal Error', false);
       return [ChatContent.text('Error executing command: $e')];
     }
   }

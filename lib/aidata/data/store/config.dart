@@ -1,5 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:studio_packet/aidata/data/model/chat/config.dart';
+import 'package:studio_packet/utils/telegram_reporter.dart';
 
 final class ConfigStore extends HiveStore {
   ConfigStore._() : super('config');
@@ -46,8 +47,9 @@ final class ConfigStore extends HiveStore {
         } else if (item is Map) {
           try {
             map[key] = ChatConfig.fromJson(item.cast<String, dynamic>());
-          } catch (e) {
+          } catch (e, s) {
             errCount++;
+            TelegramReporter.reportError(e, s, null, 'Config.fetchAll parse error', false);
           }
         }
       }

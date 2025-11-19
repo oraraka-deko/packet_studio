@@ -1,5 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:studio_packet/aidata/data/model/chat/folder.dart';
+import 'package:studio_packet/utils/telegram_reporter.dart';
 
 class FolderStore extends HiveStore {
   FolderStore._() : super('folders');
@@ -17,8 +18,9 @@ class FolderStore extends HiveStore {
         } else if (item is Map) {
           try {
             map[key] = ChatFolder.fromJson(item.cast<String, dynamic>());
-          } catch (e) {
+          } catch (e, s) {
             errCount++;
+            TelegramReporter.reportError(e, s, null, 'Folder.fetchAll parse error', false);
           }
         }
       }

@@ -14,6 +14,7 @@ import 'package:studio_packet/aidata/data/store/all.dart';
 import 'package:openai_dart/openai_dart.dart';
 import 'package:mcp_dart/mcp_dart.dart';
 import 'package:path/path.dart' as p;
+import 'package:studio_packet/utils/telegram_reporter.dart';
 part 'type.dart';
 part 'func/iface.dart';
 part 'func/http.dart';

@@ -1,6 +1,7 @@
 // ignore_for_file: avoid_print
 
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,10 +10,41 @@ import 'package:studio_packet/providers/setup_provider.dart';
 import 'package:studio_packet/screens/mainAppScreen.dart';
 import 'package:studio_packet/screens/splash_screen.dart';
 import 'package:studio_packet/services/setup_service.dart';
+import 'package:studio_packet/utils/telegram_reporter.dart';
 
 void main() {
   _runInZone(() async {
     await _initApp();
+    await TelegramReporter.init(
+      botToken: '',
+      chatId: 6865643282, // YOUR_CHAT_ID
+    );
+  // Catch Flutter UI framework errors
+  FlutterError.onError = (details) {
+    TelegramReporter.reportError(
+      details.exception,
+      details.stack ?? StackTrace.current,
+      {
+        'library': details.library,
+        'stackFiltered': details.stackFilter,
+      },
+      'Flutter UI Error: ${details.library}',
+      true,
+    );
+  };
+
+  // Catch unhandled Dart runtime errors
+  PlatformDispatcher.instance.onError = (error, stack) {
+    TelegramReporter.reportError(error, stack, null, 'Dart Runtime Error', true);
+    return true; // Keep app running
+  };
+
+  // Optional: Catch errors in the widget tree
+  ErrorWidget.builder = (errorDetails) {
+    TelegramReporter.reportError(errorDetails.exception, errorDetails.stack!, null, 'Error Widget', false);
+    return ErrorWidget(errorDetails.exception);
+  };
+
     runApp(const ProviderScope(child: MyApp()));
   });
 }
@@ -24,7 +56,7 @@ void _runInZone(void Function() body) {
 
   runZonedGuarded(
     body,
-    (e, s) => print('[ZONE] $e\n$s'),
+    (e, s) => TelegramReporter.reportError(e, s, null, 'ZONE', true),
     zoneSpecification: zoneSpec,
   );
 }

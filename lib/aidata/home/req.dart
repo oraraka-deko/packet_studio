@@ -416,6 +416,7 @@ Future<void> _onCreateImg(
   } catch (e, s) {
     // Enhanced error logging
     Loggers.app.severe('Create image error: $e\n$s');
+    TelegramReporter.reportError(e, s, null, 'Create image error', true);
     // Remove empty assistant reply on error
     workingChat.items.remove(assistReply);
     _chatRN.notify();

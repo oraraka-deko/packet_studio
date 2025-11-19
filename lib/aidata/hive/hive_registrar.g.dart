@@ -3,7 +3,6 @@
 // Check in to version control
 
 import 'package:hive_ce/hive.dart';
-import 'package:studio_packet/aidata/data/model/chat/folder.dart';
 import 'package:studio_packet/aidata/hive/hive_adapters.dart';
 
 extension HiveRegistrar on HiveInterface {

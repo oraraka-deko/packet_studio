@@ -1,6 +1,7 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:studio_packet/aidata/data/model/chat/history/history.dart';
 import 'package:studio_packet/aidata/data/store/all.dart';
+import 'package:studio_packet/utils/telegram_reporter.dart';
 
 final class TrashStore extends HiveStore {
   TrashStore._() : super('trash');
@@ -40,6 +41,7 @@ final class TrashStore extends HiveStore {
             content.deleteFile();
           } catch (e, st) {
             Loggers.app.warning('Delete file failed', e, st);
+            TelegramReporter.reportError(e, st, null, 'Delete file failed in trash', false);
           }
         }
       }
@@ -59,8 +61,9 @@ final class TrashStore extends HiveStore {
           } else if (item is Map) {
             try {
               map[key] = ChatHistory.fromJson(item.cast<String, dynamic>());
-            } catch (e) {
+            } catch (e, s) {
               errCount++;
+              TelegramReporter.reportError(e, s, null, 'Trash._histories parse error', false);
             }
           }
         }

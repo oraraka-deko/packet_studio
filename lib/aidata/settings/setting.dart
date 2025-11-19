@@ -10,6 +10,7 @@ import 'package:url_launcher/url_launcher_string.dart';
 
 import '../../utils/api_balance.dart';
 import '../../utils/tool_func/tool.dart';
+import '../../utils/telegram_reporter.dart';
 import '../data/model/chat/config.dart';
 import '../data/res/build_data.dart';
 import '../data/res/github_id.dart';

@@ -48,6 +48,9 @@ dependencies:
   logging: ^1.3.0
   hive_ce_flutter: ^2.3.3
   root_plus: ^1.1.0
+  hive_ce: ^2.15.1
+  telegram_crash_reporter: ^1.0.0
+  equatable: ^2.0.7
 dev_dependencies:
   flutter_test:
     sdk: flutter

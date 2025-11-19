@@ -11,6 +11,7 @@ import 'package:studio_packet/aidata/data/res/url.dart';
 import 'package:studio_packet/aidata/data/store/all.dart';
 import 'package:openai_dart/openai_dart.dart';
 import 'package:dio/dio.dart';
+import 'package:studio_packet/utils/telegram_reporter.dart';
 
 abstract final class Cfg {
   static var client = OpenAIClient(apiKey: vn.value.key, baseUrl: vn.value.url);
@@ -109,6 +110,7 @@ static bool isMcpCompatibleTasker({String? taskerModel}) {
       return true;
     } catch (e, s) {
       Loggers.app.warning('Failed to update models', e, s);
+      TelegramReporter.reportError(e, s, null, 'Failed to update models', false);
       if (diffUrl) models.value = [];
       return false;
     }

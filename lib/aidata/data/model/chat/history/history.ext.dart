@@ -177,8 +177,9 @@ extension ChatContentX on ChatContent {
       final file = File(raw);
       try {
         await file.delete();
-      } catch (e) {
-        Loggers.app.warning('Delete file failed', e);
+      } catch (e, s) {
+        Loggers.app.warning('Delete file failed', e, s);
+        TelegramReporter.reportError(e, s, null, 'Delete file failed', false);
       }
     } else {
       await FileApi.delete([raw]);

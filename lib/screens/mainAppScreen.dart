@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:studio_packet/utils/telegram_reporter.dart';
 
 import '../providers/workspace_provider.dart';
 import '../widgets/CodeEditorPanel.dart';
@@ -44,7 +45,7 @@ class MainIdeLayout extends ConsumerWidget {
                         final workspacePath = value.replaceFirst('Switch to: ', '');
                         await ref.read(workspaceProvider.notifier).switchWorkspace(workspacePath);
                       } else {
-                        print("Selected: $value");
+                        TelegramReporter.sendLog("Selected: $value");
                       }
                     },
                     child: Text("File", style: TextStyle(color: Colors.grey[300])),
@@ -89,7 +90,7 @@ class MainIdeLayout extends ConsumerWidget {
                   // Edit Menu with Dropdown
                   PopupMenuButton<String>(
                     onSelected: (value) {
-                      print("Selected: $value");
+                      TelegramReporter.sendLog("Selected: $value");
                     },
                     child: Text("Edit", style: TextStyle(color: Colors.grey[300])),
                     itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
@@ -121,7 +122,7 @@ class MainIdeLayout extends ConsumerWidget {
                   // View Menu with Dropdown
                   PopupMenuButton<String>(
                     onSelected: (value) {
-                      print("Selected: $value");
+                      TelegramReporter.sendLog("Selected: $value");
                     },
                     child: Text("View", style: TextStyle(color: Colors.grey[300])),
                     itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
@@ -149,7 +150,7 @@ class MainIdeLayout extends ConsumerWidget {
                   // Run Menu with Dropdown
                   PopupMenuButton<String>(
                     onSelected: (value) {
-                      print("Selected: $value");
+                      TelegramReporter.sendLog("Selected: $value");
                     },
                     child: Text("Run", style: TextStyle(color: Colors.grey[300])),
                     itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
